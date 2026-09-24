@@ -1,4 +1,4 @@
-export const CHARACTER_LETTERS = [..."humorme?"];
+export const CHARACTER_LETTERS = [..."humourme"];
 
 export type Character = {
   id: string;

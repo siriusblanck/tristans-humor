@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Character } from "@/lib/characters";
 
-const TOP_LINE_LENGTH = 5;
+const TOP_LINE_LENGTH = 6;
+const MOVE_DURATION = 700;
 
 export default function CharacterSequence({
   characters,
@@ -15,14 +16,14 @@ export default function CharacterSequence({
   const [phase, setPhase] = useState<"intro" | "revealing" | "complete">(
     "intro",
   );
-  const [visibleCards, setVisibleCards] = useState<number[]>([]);
+  const [visibleCards, setVisibleCards] = useState(0);
   const sourceLetters = useRef<Array<HTMLSpanElement | null>>([]);
   const targetLetters = useRef<Array<HTMLSpanElement | null>>([]);
+  const questionTarget = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let introTimer = 0;
-    const runningAnimations: Animation[] = [];
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -30,71 +31,60 @@ export default function CharacterSequence({
     const pause = (duration: number) =>
       new Promise<void>((resolve) => window.setTimeout(resolve, duration));
 
-    const moveGlyph = async (index: number, animate: boolean) => {
+    const moveGlyph = async (index: number) => {
       const source = sourceLetters.current[index];
-      const target = targetLetters.current[index];
+      const target =
+        index === characters.length
+          ? questionTarget.current
+          : targetLetters.current[index];
       if (!source || !target) return;
 
       const start = source.getBoundingClientRect();
       const end = target.getBoundingClientRect();
       const x = end.left + end.width / 2 - (start.left + start.width / 2);
       const y = end.top + end.height / 2 - (start.top + start.height / 2);
-      const destination = `translate(${x}px, ${y}px)`;
 
-      if (!animate) {
-        source.style.transform = destination;
-        return;
+      source.style.transition = prefersReducedMotion
+        ? "none"
+        : `transform ${MOVE_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      source.style.transform = `translate(${x}px, ${y}px)`;
+
+      if (!prefersReducedMotion) {
+        // Flush the style change so the browser creates the transition, then
+        // wait for its painted finish before revealing the corresponding card.
+        void getComputedStyle(source).transform;
+        const transition = source.getAnimations()[0];
+        if (transition) await transition.finished.catch(() => undefined);
       }
-
-      const animation = source.animate(
-        [
-          { transform: "translate(0px, 0px)" },
-          { transform: destination },
-        ],
-        {
-          duration: 700,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-          fill: "forwards",
-        },
-      );
-
-      runningAnimations.push(animation);
-      await pause(730);
     };
 
     const reveal = async () => {
       setPhase("revealing");
 
-      if (prefersReducedMotion) {
-        for (let index = 0; index < characters.length; index += 1) {
-          await moveGlyph(index, false);
-        }
-        if (!cancelled) {
-          setVisibleCards(characters.map((_, index) => index));
-          setPhase("complete");
-        }
-        return;
-      }
-
       for (let index = 0; index < characters.length; index += 1) {
         if (cancelled) return;
-
-        await moveGlyph(index, true);
+        await moveGlyph(index);
         if (cancelled) return;
-
-        setVisibleCards((current) => [...current, index]);
-        await pause(130);
+        setVisibleCards(index + 1);
+        if (!prefersReducedMotion) await pause(110);
       }
 
+      if (cancelled) return;
+      await moveGlyph(characters.length);
       if (!cancelled) setPhase("complete");
     };
 
-    introTimer = window.setTimeout(() => void reveal(), 460);
+    void document.fonts.ready.then(() => {
+      if (cancelled) return;
+      introTimer = window.setTimeout(
+        () => void reveal(),
+        prefersReducedMotion ? 0 : 420,
+      );
+    });
 
     return () => {
       cancelled = true;
       window.clearTimeout(introTimer);
-      runningAnimations.forEach((animation) => animation.cancel());
     };
   }, [characters]);
 
@@ -104,7 +94,7 @@ export default function CharacterSequence({
     label: string,
   ) => (
     <section
-      className="word-section"
+      className={`word-section ${startIndex === 0 ? "word-section-top" : "word-section-bottom"}`}
       aria-label={label}
       key={label}
       style={{ "--column-count": sectionCharacters.length } as CSSProperties}
@@ -112,25 +102,29 @@ export default function CharacterSequence({
       <div className="letter-row" aria-hidden="true">
         {sectionCharacters.map((character, localIndex) => {
           const index = startIndex + localIndex;
+          const isLastLetter = index === characters.length - 1;
+
           return (
             <div className="letter-dock" key={character.id}>
-              <span
-                className="letter-anchor"
-                ref={(node) => {
-                  targetLetters.current[index] = node;
-                }}
-              >
-                {character.letter}
+              <span className={isLastLetter ? "letter-pair" : undefined}>
+                <span
+                  className="letter-anchor"
+                  ref={(node) => {
+                    targetLetters.current[index] = node;
+                  }}
+                >
+                  {character.letter}
+                </span>
+                {isLastLetter && (
+                  <span className="question-anchor" ref={questionTarget} />
+                )}
               </span>
             </div>
           );
         })}
       </div>
 
-      <ol
-        className="character-grid"
-        aria-label={`${label} character cards`}
-      >
+      <ol className="character-grid" aria-label={`${label} character cards`}>
         {sectionCharacters.map((character, localIndex) => {
           const index = startIndex + localIndex;
           const cardStyle = {
@@ -140,7 +134,7 @@ export default function CharacterSequence({
           return (
             <li className="character-slot" key={character.id}>
               <article
-                className={`character-card${visibleCards.includes(index) ? " is-visible" : ""}`}
+                className={`character-card${index < visibleCards ? " is-visible" : ""}`}
                 style={cardStyle}
               >
                 <div className="portrait-frame">
@@ -150,7 +144,8 @@ export default function CharacterSequence({
                       src={character.image_url}
                       alt={character.name ? `${character.name} portrait` : "Character portrait"}
                       fill
-                      sizes="(max-width: 760px) 20vw, 19vw"
+                      sizes={startIndex === 0 ? "16vw" : "50vw"}
+                      loading="eager"
                       unoptimized
                     />
                   ) : (
@@ -163,9 +158,6 @@ export default function CharacterSequence({
                 </div>
                 <div className="character-copy">
                   <h2>{character.name || "Name goes here"}</h2>
-                  <p className="character-fact">
-                    {character.fact || "A curious fact goes here."}
-                  </p>
                 </div>
               </article>
             </li>
@@ -180,7 +172,7 @@ export default function CharacterSequence({
 
   return (
     <main className="page-shell">
-      <h1 className="visually-hidden">humor me?</h1>
+      <h1 className="visually-hidden">humour me?</h1>
 
       <div className="intro-overlay" aria-hidden="true">
         <div className="intro-wordmark">
@@ -212,13 +204,21 @@ export default function CharacterSequence({
                 </span>
               );
             })}
+            <span
+              className="intro-letter intro-question"
+              ref={(node) => {
+                sourceLetters.current[characters.length] = node;
+              }}
+            >
+              ?
+            </span>
           </div>
         </div>
       </div>
 
       <div className={`gallery-stage gallery-stage-${phase}`}>
-        {renderSection(topLine, 0, "Humor")}
-        {renderSection(bottomLine, TOP_LINE_LENGTH, "Me")}
+        {renderSection(topLine, 0, "Humour")}
+        {renderSection(bottomLine, TOP_LINE_LENGTH, "Me?")}
       </div>
     </main>
   );

@@ -1,10 +1,10 @@
 # humour me?
 
-An animated character gallery. The letters in “humor” and “me?” travel from the opening wordmark to two rows of character cards. Each card reads its image, name, and fact from Supabase.
+An animated character gallery. The six letters in “humour” and the two letters in “me” travel from the opening wordmark to two rows of character cards. The question mark stays with “me?” as punctuation. Each card displays a character image and name from Supabase.
 
 ## Supabase
 
-The `characters` table has one ordered row for each of the eight cards: `h`, `u`, `m`, `o`, `r`, `m`, `e`, and `?`. Its `name`, `image_url`, and `fact` fields are blank placeholders until the character choices are ready. Public access is read-only through a row-level security policy.
+The `characters` table has one ordered row for each of the eight cards: `h`, `u`, `m`, `o`, `u`, `r`, `m`, and `e`. Its `name`, `image_url`, and `fact` fields remain editable; the gallery currently shows the image and name. Public access is read-only through a row-level security policy.
 
 The table schema and placeholder rows live in `supabase/migrations/`. Set these values in `.env.local` for local development:
 

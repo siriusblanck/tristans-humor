@@ -3,8 +3,7 @@
 :root {
   --background: #f4f2ec;
   --foreground: #25251f;
-  --muted: #77776e;
-  --letter-size: clamp(2.3rem, 6vw, 7rem);
+  --letter-size: clamp(3.1rem, 7.1vw, 7.5rem);
 }
 
 @theme inline {
@@ -27,9 +26,8 @@ body {
 
 .page-shell {
   height: 100svh;
-  min-height: 520px;
   overflow: hidden;
-  padding: 9px;
+  padding: 8px;
   position: relative;
   width: 100%;
 }
@@ -56,31 +54,20 @@ body {
 
 .intro-wordmark {
   align-items: center;
-  color: var(--foreground);
   display: flex;
   flex-direction: column;
-  font-family: var(--font-montserrat), Arial, sans-serif;
-  font-size: var(--letter-size);
-  font-weight: 600;
   gap: 0.12em;
-  letter-spacing: -0.075em;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.intro-line,
-.letter-row,
-.character-grid {
-  display: grid;
-  gap: 7px;
-  grid-template-columns: repeat(var(--column-count), minmax(0, 1fr));
 }
 
 .intro-line {
   align-items: center;
   display: flex;
-  gap: 0.09em;
+  gap: 0.08em;
   justify-content: center;
+}
+
+.intro-question {
+  margin-left: -0.07em;
 }
 
 .intro-letter,
@@ -88,23 +75,20 @@ body {
   display: inline-block;
   font-family: var(--font-montserrat), Arial, sans-serif;
   font-size: var(--letter-size);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.075em;
   line-height: 1;
-  transform-origin: center;
   white-space: nowrap;
-  will-change: transform;
 }
 
 .gallery-stage {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  inset: 9px;
+  inset: 8px;
   opacity: 0;
   pointer-events: none;
   position: absolute;
-  transition: opacity 260ms ease;
 }
 
 .gallery-stage-revealing,
@@ -115,9 +99,16 @@ body {
 .word-section {
   display: grid;
   gap: 3px;
-  grid-template-rows: clamp(58px, 10.5vh, 112px) minmax(0, 1fr);
+  grid-template-rows: clamp(74px, 12.5vh, 122px) minmax(0, 1fr);
   min-height: 0;
   min-width: 0;
+}
+
+.letter-row,
+.character-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(var(--column-count), minmax(0, 1fr));
 }
 
 .letter-row {
@@ -131,11 +122,24 @@ body {
   height: 100%;
   justify-content: center;
   min-width: 0;
-  overflow: visible;
 }
 
 .letter-anchor {
   color: transparent;
+}
+
+.letter-pair {
+  align-items: center;
+  display: inline-flex;
+  font-size: var(--letter-size);
+  gap: 0.015em;
+  line-height: 1;
+}
+
+.question-anchor {
+  display: inline-block;
+  height: 1em;
+  width: 0.48em;
 }
 
 .character-grid {
@@ -152,34 +156,27 @@ body {
 }
 
 .character-card {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(37, 37, 31, 0.09);
-  border-radius: 9px;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  background: #d9d5c8;
+  border-radius: 8px;
   height: 100%;
   min-height: 0;
-  min-width: 0;
   opacity: 0;
   overflow: hidden;
-  transform: translateY(9px);
-  transition:
-    opacity 280ms ease,
-    transform 440ms cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  transition: opacity 300ms ease;
 }
 
 .character-card.is-visible {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .portrait-frame {
   background:
     radial-gradient(circle at 75% 18%, rgba(255, 255, 255, 0.76), transparent 30%),
     hsl(var(--card-hue) 46% 83%);
-  min-height: 0;
+  inset: 0;
   overflow: hidden;
-  position: relative;
+  position: absolute;
 }
 
 .portrait-image {
@@ -222,71 +219,76 @@ body {
 }
 
 .character-copy {
-  padding: 11px clamp(9px, 1.2vw, 18px) 13px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(18, 18, 16, 0.72) 58%,
+    rgba(18, 18, 16, 0.9)
+  );
+  bottom: 0;
+  color: #fff;
+  left: 0;
+  padding: 52px 12px 14px;
+  position: absolute;
+  right: 0;
 }
 
 .character-copy h2 {
   font-family: var(--font-montserrat), Arial, sans-serif;
-  font-size: clamp(13px, 1.2vw, 18px);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.2;
+  font-size: clamp(1.25rem, 1.85vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.character-fact {
-  color: var(--muted);
-  font-size: clamp(10px, 0.95vw, 13px);
-  line-height: 1.4;
-  margin: 5px 0 0;
-  overflow-wrap: anywhere;
+.word-section-bottom .character-copy h2 {
+  font-size: clamp(2rem, 3.3vw, 3.5rem);
 }
 
 @media (max-width: 760px) {
   :root {
-    --letter-size: clamp(1.8rem, 7vw, 3.4rem);
+    --letter-size: clamp(1.55rem, 7.6vw, 3.6rem);
   }
 
   .page-shell {
-    padding: 6px;
+    padding: 5px;
   }
 
   .gallery-stage {
     gap: 5px;
-    inset: 6px;
+    inset: 5px;
   }
 
   .word-section {
     gap: 2px;
-    grid-template-rows: clamp(45px, 8vh, 66px) minmax(0, 1fr);
+    grid-template-rows: clamp(42px, 8vh, 66px) minmax(0, 1fr);
   }
 
-  .intro-line,
   .letter-row,
   .character-grid {
-    gap: 4px;
+    gap: 3px;
   }
 
   .character-card {
-    border-radius: 6px;
+    border-radius: 5px;
   }
 
   .character-copy {
-    padding: 7px 6px 8px;
+    padding: 22px 4px 7px;
   }
 
   .character-copy h2 {
-    font-size: clamp(10px, 2.8vw, 14px);
+    font-size: clamp(9px, 2.4vw, 13px);
   }
 
-  .character-fact {
-    font-size: clamp(8px, 2.2vw, 11px);
+  .word-section-bottom .character-copy h2 {
+    font-size: clamp(1.2rem, 4vw, 2rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallery-stage,
   .character-card {
     transition: none;
   }
