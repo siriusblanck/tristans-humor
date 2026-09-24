@@ -18,8 +18,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "humour me?",
-  description: "A character gallery, revealed one letter at a time.",
+  title: "humor me?",
+  description: "A two-row character gallery, revealed one letter at a time.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

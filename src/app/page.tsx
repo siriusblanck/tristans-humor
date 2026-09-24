@@ -4,19 +4,15 @@ import CharacterSequence from "./character-sequence";
 import { EMPTY_CHARACTER_SLOTS, type Character } from "@/lib/characters";
 
 type CharacterRow = Omit<Character, "id"> & { id: string };
-type ConnectionStatus = "connected" | "missing" | "unavailable";
 
-async function loadCharacters(): Promise<{
-  characters: Character[];
-  connectionStatus: ConnectionStatus;
-}> {
+async function loadCharacters(): Promise<Character[]> {
   await connection();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return { characters: EMPTY_CHARACTER_SLOTS, connectionStatus: "missing" };
+    return EMPTY_CHARACTER_SLOTS;
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -33,7 +29,7 @@ async function loadCharacters(): Promise<{
     .order("sort_order", { ascending: true });
 
   if (error) {
-    return { characters: EMPTY_CHARACTER_SLOTS, connectionStatus: "unavailable" };
+    return EMPTY_CHARACTER_SLOTS;
   }
 
   const rows = (data ?? []) as CharacterRow[];
@@ -42,16 +38,11 @@ async function loadCharacters(): Promise<{
     (emptySlot) => rowByOrder.get(emptySlot.sort_order) ?? emptySlot,
   );
 
-  return { characters, connectionStatus: "connected" };
+  return characters;
 }
 
 export default async function Home() {
-  const { characters, connectionStatus } = await loadCharacters();
+  const characters = await loadCharacters();
 
-  return (
-    <CharacterSequence
-      characters={characters}
-      connectionStatus={connectionStatus}
-    />
-  );
+  return <CharacterSequence characters={characters} />;
 }

@@ -1,10 +1,10 @@
 # humour me?
 
-An animated character gallery. Each letter in “humour me?” travels from the opening wordmark to a card, then reveals the character’s image, name, and fact from Supabase.
+An animated character gallery. The letters in “humor” and “me?” travel from the opening wordmark to two rows of character cards. Each card reads its image, name, and fact from Supabase.
 
 ## Supabase
 
-The `characters` table has one ordered row for each of the eight letters. Its `name`, `image_url`, and `fact` fields are blank placeholders until the character choices are ready. Public access is read-only through a row-level security policy.
+The `characters` table has one ordered row for each of the eight cards: `h`, `u`, `m`, `o`, `r`, `m`, `e`, and `?`. Its `name`, `image_url`, and `fact` fields are blank placeholders until the character choices are ready. Public access is read-only through a row-level security policy.
 
 The table schema and placeholder rows live in `supabase/migrations/`. Set these values in `.env.local` for local development:
 
@@ -24,4 +24,4 @@ npm install
 npm run dev
 ```
 
-The letters reveal in sequence on page load. The gallery supports a reduced-motion preference and can be replayed after the reveal finishes.
+The letters reveal in sequence on page load. The gallery supports a reduced-motion preference.
