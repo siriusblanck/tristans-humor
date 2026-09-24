@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Character } from "@/lib/characters";
 
-const TOP_LINE_LENGTH = 6;
+const TOP_LINE_LENGTH = 5;
 const MOVE_DURATION = 700;
 
 export default function CharacterSequence({
@@ -144,7 +144,7 @@ export default function CharacterSequence({
                       src={character.image_url}
                       alt={character.name ? `${character.name} portrait` : "Character portrait"}
                       fill
-                      sizes={startIndex === 0 ? "16vw" : "50vw"}
+                      sizes={startIndex === 0 ? "20vw" : "50vw"}
                       loading="eager"
                       unoptimized
                     />
@@ -172,7 +172,7 @@ export default function CharacterSequence({
 
   return (
     <main className="page-shell">
-      <h1 className="visually-hidden">humour me?</h1>
+      <h1 className="visually-hidden">humor me?</h1>
 
       <div className="intro-overlay" aria-hidden="true">
         <div className="intro-wordmark">
@@ -217,7 +217,7 @@ export default function CharacterSequence({
       </div>
 
       <div className={`gallery-stage gallery-stage-${phase}`}>
-        {renderSection(topLine, 0, "Humour")}
+        {renderSection(topLine, 0, "Humor")}
         {renderSection(bottomLine, TOP_LINE_LENGTH, "Me?")}
       </div>
     </main>

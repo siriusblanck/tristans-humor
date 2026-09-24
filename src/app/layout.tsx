@@ -18,7 +18,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "humour me?",
+  title: "humor me?",
   description: "A two-row character gallery, revealed one letter at a time.",
 };
 
