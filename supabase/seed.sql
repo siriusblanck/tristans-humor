@@ -1,0 +1,1 @@
+-- Placeholder character rows are inserted by the initial migration.

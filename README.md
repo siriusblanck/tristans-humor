@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# humour me?
 
-## Getting Started
+An animated character gallery. Each letter in “humour me?” travels from the opening wordmark to a card, then reveals the character’s image, name, and fact from Supabase.
 
-First, run the development server:
+## Supabase
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The `characters` table has one ordered row for each of the eight letters. Its `name`, `image_url`, and `fact` fields are blank placeholders until the character choices are ready. Public access is read-only through a row-level security policy.
+
+The table schema and placeholder rows live in `supabase/migrations/`. Set these values in `.env.local` for local development:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Use `.env.example` as a template. Add the same variables to the Production and Preview environments in Vercel. Never commit `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To update the gallery, edit the eight rows in Supabase and fill in `name`, `image_url`, and `fact`. The `sort_order` values determine the card order.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Run locally
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The letters reveal in sequence on page load. The gallery supports a reduced-motion preference and can be replayed after the reveal finishes.
