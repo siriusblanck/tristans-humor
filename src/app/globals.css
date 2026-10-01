@@ -95,10 +95,6 @@ button:disabled {
   position: absolute;
 }
 
-.landing-details p {
-  margin: 0 0 12px;
-}
-
 .landing-details nav,
 .public-info nav {
   display: flex;
@@ -118,15 +114,24 @@ button:disabled {
   text-align: right;
 }
 
+.sign-in-prefix,
 .sign-in-link {
-  background: none;
-  border: 0;
-  display: inline-block;
   font-family: var(--font-montserrat), Arial, sans-serif;
   font-size: clamp(2.8rem, 7vw, 7.5rem);
   font-weight: 600;
   letter-spacing: -0.07em;
   line-height: 1.2;
+}
+
+.sign-in-prefix {
+  margin-right: 0.18em;
+  text-decoration: none;
+}
+
+.sign-in-link {
+  background: none;
+  border: 0;
+  display: inline-block;
   padding: 0 0 8px;
   text-decoration-line: underline;
   text-decoration-thickness: 0.045em;

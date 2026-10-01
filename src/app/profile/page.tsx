@@ -20,9 +20,9 @@ export default async function ProfilePage() {
       <AccountNav current="profile" onboarding={onboarding} />
       <main className="profile-main">
         <div className="profile-heading">
-          <p className="eyebrow">{onboarding ? "A quick introduction" : "Make yourself at home"}</p>
+          {!onboarding && <p className="eyebrow">Make yourself at home</p>}
           <h1>{onboarding ? <>First, your<br />name<span>?</span></> : <>Your<br />profile<span>.</span></>}</h1>
-          <p>{onboarding ? "Tell us your first and last name, then let the characters take it from here." : "A name. A face. A little more you."}</p>
+          {!onboarding && <p>A name. A face. A little more you.</p>}
         </div>
         <ProfileForm profile={profile} email={user.email ?? ""} avatarUrl={avatarUrl} onboarding={onboarding} />
       </main>

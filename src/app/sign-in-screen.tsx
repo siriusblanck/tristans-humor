@@ -33,7 +33,6 @@ export default function SignInScreen({ message }: { message?: string }) {
       </h1>
 
       <footer className="landing-details">
-        <p>An animated gallery of characters, with a profile of your own.</p>
         <nav aria-label="App information">
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
@@ -41,6 +40,7 @@ export default function SignInScreen({ message }: { message?: string }) {
       </footer>
 
       <div className="sign-in-corner">
+        <span className="sign-in-prefix">Buy</span>{" "}
         <button
           className="sign-in-link"
           type="button"
@@ -50,7 +50,7 @@ export default function SignInScreen({ message }: { message?: string }) {
           aria-describedby={error ? "sign-in-error" : undefined}
           aria-busy={pending}
         >
-          Signing in
+          Signing In
         </button>
         {pending && <p className="sign-in-status" role="status">Opening Google...</p>}
         {error && <p className="sign-in-error" id="sign-in-error" role="alert">{error}</p>}
