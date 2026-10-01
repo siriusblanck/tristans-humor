@@ -40,7 +40,7 @@ export default function SignInScreen({ message }: { message?: string }) {
       </footer>
 
       <div className="sign-in-corner">
-        <span className="sign-in-prefix">Buy</span>{" "}
+        <span className="sign-in-prefix">by</span>{" "}
         <button
           className="sign-in-link"
           type="button"
