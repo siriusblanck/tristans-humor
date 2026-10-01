@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignInScreen({ message }: { message?: string }) {
@@ -30,6 +31,14 @@ export default function SignInScreen({ message }: { message?: string }) {
       <h1 className="landing-wordmark" aria-label="Humour me...">
         <span>Humour</span>{" "}<span>me<span className="landing-ellipsis">...</span></span>
       </h1>
+
+      <footer className="landing-details">
+        <p>An animated gallery of characters, with a profile of your own.</p>
+        <nav aria-label="App information">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+        </nav>
+      </footer>
 
       <div className="sign-in-corner">
         <button

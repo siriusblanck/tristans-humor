@@ -59,6 +59,8 @@ Follow the [Supabase Google provider guide](https://supabase.com/docs/guides/aut
 
 Create a **Web application** OAuth client in your own Google Cloud project, configure the consent screen with the basic OpenID, email, and profile scopes, and enable the **Google** provider in Supabase with that client's ID and secret. To accept sign-ins from everyone, publish the OAuth consent screen; if you keep it in testing mode, add the required test users.
 
+The public `/privacy` and `/terms` pages describe this educational app and its account data. Set Google’s application homepage, privacy, and terms links to a deployed origin that serves these pages, and add that origin under authorized domains. The landing page links to both pages. Review this information if the app’s purpose or data practices change.
+
 In **Supabase → Authentication → URL Configuration**, use the production app as the Site URL and add each exact callback you need:
 
 ```text
