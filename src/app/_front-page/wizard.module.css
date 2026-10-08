@@ -1,0 +1,282 @@
+/* "Send in your owl": everything but the prompt bar blurs, the cast fans out as cards, the
+ * chosen card takes the centre with the twist box beside it, and an owl carries it off. */
+
+.veil {
+  -webkit-backdrop-filter: blur(12px) saturate(0.8) brightness(0.72);
+  backdrop-filter: blur(12px) saturate(0.8) brightness(0.72);
+  background: rgba(12, 17, 44, 0.28);
+  inset: 0;
+  position: fixed;
+  z-index: 25;
+}
+
+.wizard {
+  --cw: 128px;
+  --ch: 178px;
+  --deck-top: 172px;
+  --cs: 1.5;
+  --pair-gap: 28px;
+  --twist-w: 410px;
+  /* The chosen card (scaled by --cs) and the twist box sit side by side, centred as a pair. */
+  --cx: calc(var(--cw) * var(--cs) / 2 - (var(--cw) * var(--cs) + var(--pair-gap) + var(--twist-w)) / 2);
+  --cy: 0px;
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 90px;
+  z-index: 30;
+}
+
+.title {
+  font: italic 400 38px/1.1 var(--f-voice);
+  left: 0;
+  margin: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(4, 8, 24, 0.6);
+  top: 22px;
+  transition: opacity 0.2s;
+}
+
+.title[data-hidden="true"] { opacity: 0; }
+
+/* Top right of the page, where the avatar sits (on desktop, "fixed" means fixed to the stage). */
+.close {
+  position: fixed;
+  right: 28px;
+  top: 23px;
+}
+
+.writer {
+  --lift: 0px;
+  background: linear-gradient(160deg, #ddbb6e, #9c7a3c);
+  border: 0;
+  border-radius: 9px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  grid-template-rows: 1fr auto;
+  height: var(--ch);
+  left: calc(50% - var(--cw) / 2);
+  padding: 6px;
+  position: absolute;
+  top: var(--deck-top);
+  transform: translate(var(--x), calc(var(--y) - var(--lift))) rotate(var(--r));
+  transform-origin: 50% 100%;
+  transition: transform 0.22s var(--ease-settle);
+  width: var(--cw);
+}
+
+.writer:hover,
+.writer:focus-visible { --lift: 22px; }
+
+.writer:focus-visible {
+  outline: 2px solid var(--columbia);
+  outline-offset: 3px;
+}
+
+.writer[data-state="chosen"] {
+  --lift: 0px;
+  pointer-events: none;
+  transform: translate(var(--cx), var(--cy)) scale(var(--cs));
+  transition: transform 0.54s var(--ease-flight);
+}
+
+.writer[data-state="gone"] {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(var(--x), calc(var(--y) + 520px)) rotate(calc(var(--r) + var(--spin)));
+  transition: transform 0.42s cubic-bezier(0.5, 0, 0.9, 0.4) var(--delay), opacity 0.42s var(--delay);
+}
+
+.portrait {
+  background: radial-gradient(circle at 50% 36%, hsl(var(--h) 42% 47%), hsl(var(--h) 38% 19%));
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.portrait img { object-fit: cover; }
+
+.name {
+  align-items: center;
+  background: var(--parchment);
+  border-radius: 3px;
+  display: grid;
+  font: 13px/1.1 var(--f-label);
+  justify-items: center;
+  min-height: 32px;
+  padding: 5px 4px;
+  text-align: center;
+}
+
+/* Beside the chosen card: its top level with the card's (which grows upward from its base). */
+.twist {
+  background: rgba(28, 38, 80, 0.94);
+  border: 1px solid var(--hall-line);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  left: calc(50% + var(--cx) + var(--cw) * var(--cs) / 2 + var(--pair-gap));
+  padding: 24px;
+  position: absolute;
+  top: calc(var(--deck-top) + var(--ch) * (1 - var(--cs)));
+  width: var(--twist-w);
+}
+
+.twist label {
+  color: var(--columbia);
+  font: 16px/1 var(--f-label);
+  letter-spacing: 0.06em;
+}
+
+.twist textarea {
+  background: var(--grain), var(--parchment);
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink);
+  font: 18px/1.35 var(--f-voice);
+  height: 96px; /* three lines: enough for 140 characters, and the box matches the card's height */
+  padding: 12px 14px;
+  resize: none;
+}
+
+.twist textarea::placeholder {
+  color: #8a7a63;
+  font-style: italic;
+}
+
+.twist textarea:focus-visible {
+  outline: 2px solid var(--columbia);
+  outline-offset: 2px;
+}
+
+.twistRow {
+  color: var(--mist);
+  display: flex;
+  font: 12.5px var(--f-ui);
+  justify-content: space-between;
+}
+
+.count {
+  font-family: var(--f-num);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.error {
+  color: #f2a29a;
+  font: 13.5px/1.45 var(--f-ui);
+  margin: 0;
+}
+
+.flight {
+  display: grid;
+  gap: 8px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  top: 330px;
+}
+
+.flight p { margin: 0; }
+
+.flightTitle {
+  font: italic 32px/1.1 var(--f-voice);
+  text-shadow: 0 2px 12px rgba(4, 8, 24, 0.6);
+}
+
+.flightHint {
+  color: var(--mist);
+  font-size: 14px;
+}
+
+.orbit {
+  animation: spin 5.5s linear infinite;
+  height: 0;
+  left: 50%;
+  position: absolute;
+  top: 190px;
+  width: 0;
+}
+
+.orbit svg {
+  left: -45px;
+  position: absolute;
+  top: -150px;
+  transform: rotate(90deg);
+  width: 90px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.carrier {
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 110px;
+}
+
+@media (min-width: 1024px) and (min-height: 600px) {
+  /* Inside the scaled stage: reach past the stage's edges on very wide or tall windows. */
+  .veil { inset: -400px; }
+}
+
+@media not ((min-width: 1024px) and (min-height: 600px)) {
+  .wizard {
+    --cw: 96px;
+    --ch: 134px;
+    --deck-top: 96px;
+    --cx: 0px;
+    --cy: -88px;
+    --cs: 1;
+    top: var(--wizard-top, 140px);
+  }
+
+  .title {
+    font-size: 28px;
+    top: 8px;
+  }
+
+  .close {
+    right: 14px;
+    top: calc(14px + env(safe-area-inset-top, 0px));
+  }
+
+  .name {
+    font-size: 11px;
+    min-height: 28px;
+  }
+
+  .twist {
+    left: 14px;
+    padding: 18px;
+    right: 14px;
+    top: 158px;
+    width: auto;
+  }
+
+  .flight { top: 300px; }
+  .orbit { top: 150px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit { animation: none; }
+
+  .writer,
+  .writer[data-state] { transition: opacity 0.15s; }
+}

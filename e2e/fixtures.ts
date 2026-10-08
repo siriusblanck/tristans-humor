@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { parseIsoDate } from "../src/lib/owl-post/dates";
+import { pickOwlPost, type OwlPost } from "../src/lib/owl-post/owl-posts";
 
-// Seeds one owl by a disposable author so the feed has something to vote on.
+// Seeds one owl by a disposable author, under this week's prompt, so the stack has something to vote on.
 // Deleting the author cascades to the generation; the picture is removed explicitly.
 const PNG_1X1 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6Vn8AAAAASUVORK5CYII=", "base64");
 
@@ -16,6 +18,18 @@ export type OwlFixture = { userId: string; generationId: string; imagePath: stri
 
 export async function seedOwl(newYorkDate: string): Promise<OwlFixture> {
   const client = admin();
+  // Look everything up before creating the author, so a failed lookup leaves nothing behind.
+  const [characters, posts] = await Promise.all([
+    client.from("characters").select("id").order("sort_order").limit(1).single(),
+    client.from("owl_posts").select("id, sort_order, headline, scene"),
+  ]);
+  if (characters.error || posts.error) {
+    throw new Error(`Fixture lookups failed: ${characters.error?.message ?? posts.error?.message}`);
+  }
+  const character = characters.data;
+  const owlPost = pickOwlPost((posts.data ?? []) as OwlPost[], parseIsoDate(newYorkDate)!);
+  if (!character || !owlPost) throw new Error("The fixture needs a character and an Owl Post prompt.");
+
   const runId = randomUUID();
   const { data: created, error: userError } = await client.auth.admin.createUser({
     email: `humour-e2e-${runId}@example.com`, password: `${randomUUID()}!Aa1`, email_confirm: true,
@@ -26,16 +40,12 @@ export async function seedOwl(newYorkDate: string): Promise<OwlFixture> {
   const generationId = randomUUID();
   const imagePath = `${userId}/${generationId}.png`;
   const caption = `E2E owl ${runId.slice(0, 8)}`;
-  const [{ data: character }, { data: owlPost }] = await Promise.all([
-    client.from("characters").select("id").order("sort_order").limit(1).single(),
-    client.from("owl_posts").select("id").limit(1).single(),
-  ]);
   const upload = await client.storage.from("generations").upload(imagePath, PNG_1X1, { contentType: "image/png" });
   if (upload.error) throw new Error(`Couldn't upload the fixture picture: ${upload.error.message}`);
 
   const { error } = await client.from("generations").insert({
-    id: generationId, author_id: userId, author_display: "E2E T.", house: "hufflepuff", character_id: character!.id,
-    owl_post_id: owlPost!.id, owl_post_date: newYorkDate, caption, image_path: imagePath, image_alt: "A fixture picture.",
+    id: generationId, author_id: userId, author_display: "E2E T.", house: "hufflepuff", character_id: character.id,
+    owl_post_id: owlPost.id, owl_post_date: newYorkDate, caption, image_path: imagePath, image_alt: "A fixture picture.",
     caption_prompt: "e2e", image_prompt: "e2e", caption_model: "e2e", image_model: "e2e",
   });
   if (error) throw new Error(`Couldn't insert the fixture owl: ${error.message}`);

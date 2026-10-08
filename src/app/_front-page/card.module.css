@@ -1,0 +1,357 @@
+/* The owl card is a folded letter: the picture on the left, printed into the paper; the
+ * letter on the right with the writer's house crest as its stamp. Its inner sizes follow the
+ * stack's width: the wide letter (640 px on desktop) or the narrow one (312 px on phones). */
+
+.stack { container: owl-stack / inline-size; }
+
+.card {
+  --pw: 46.875%;
+  --hh: 78px;
+  --sw: 56px;
+  --sh: 64px;
+  --pmw: 112px;
+  background: var(--grain), radial-gradient(120% 100% at 78% 12%, #f5eedb, var(--parchment) 52%, #e0cfa6);
+  border-radius: 22px;
+  box-shadow: 0 26px 60px rgba(4, 8, 24, 0.62), inset 0 0 0 1px rgba(120, 90, 40, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: var(--pw) minmax(0, 1fr);
+  inset: 0;
+  overflow: hidden;
+  position: absolute;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.card[data-depth="0"] { z-index: 3; }
+
+.card[data-depth="1"] {
+  filter: brightness(0.78);
+  transform: translateY(12px) scale(0.965) rotate(1.4deg);
+  z-index: 2;
+}
+
+.card[data-depth="2"] {
+  filter: brightness(0.6);
+  transform: translateY(22px) scale(0.93) rotate(-1.8deg);
+  z-index: 1;
+}
+
+.picture {
+  height: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.picture img {
+  -webkit-mask-image: linear-gradient(90deg, #000 76%, transparent);
+  mask-image: linear-gradient(90deg, #000 76%, transparent);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.letter {
+  display: grid;
+  grid-template-rows: var(--hh) minmax(0, 1fr) auto;
+  min-width: 0;
+  padding: 18px 24px 20px 12px;
+  position: relative;
+}
+
+/* A faint fold across the letter side, as if the owl carried it folded once. */
+.letter::after {
+  background: linear-gradient(180deg, transparent 49.3%, rgba(90, 66, 30, 0.13) 50%, rgba(255, 255, 255, 0.28) 50.6%, transparent 51.8%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.quote {
+  color: var(--gd);
+  font: 104px/1 var(--f-voice);
+  left: 6px;
+  opacity: 0.32;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+}
+
+.post { position: relative; }
+
+.stampWrap {
+  filter: drop-shadow(0 1.5px 1.5px rgba(60, 40, 10, 0.35));
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: rotate(4deg);
+}
+
+.stamp {
+  -webkit-mask: linear-gradient(#000 0 0) content-box, radial-gradient(circle, #0000 2.3px, #000 2.8px) -4px -4px / 8px 8px;
+  mask: linear-gradient(#000 0 0) content-box, radial-gradient(circle, #0000 2.3px, #000 2.8px) -4px -4px / 8px 8px;
+  background: #f8f2e2;
+  display: block;
+  height: var(--sh);
+  padding: 5px;
+  width: var(--sw);
+}
+
+.stampFace {
+  align-items: center;
+  background: color-mix(in srgb, var(--g) 24%, #f8f2e2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gd) 55%, transparent);
+  display: grid;
+  height: 100%;
+  justify-items: center;
+  width: 100%;
+}
+
+.stampFace img {
+  display: block;
+  height: auto;
+  width: 84%;
+}
+
+.postmark {
+  color: var(--seal-deep);
+  mix-blend-mode: multiply;
+  opacity: 0.72;
+  pointer-events: none;
+  position: absolute;
+  right: 28px;
+  top: 6px;
+  width: var(--pmw);
+}
+
+.postmarkRing {
+  fill: currentColor;
+  font: 7px var(--f-label);
+  letter-spacing: 0.7px;
+}
+
+.postmarkDate {
+  fill: currentColor;
+  font: 600 10px var(--f-num);
+}
+
+.caption {
+  align-self: center;
+  color: var(--ink);
+  font: 21px/1.3 var(--f-voice);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.caption[data-size="m"] { font-size: 18.5px; }
+.caption[data-size="l"] { font-size: 16.5px; }
+
+.foot {
+  display: grid;
+  justify-items: start;
+}
+
+.sign {
+  color: var(--ink);
+  font: italic 23px/1.1 var(--f-voice);
+  margin: 0;
+}
+
+.swash {
+  display: block;
+  fill: none;
+  height: 10px;
+  margin: 3px 0 6px 16px;
+  opacity: 0.65;
+  stroke: var(--gd);
+  stroke-linecap: round;
+  stroke-width: 1.4;
+  width: 96px;
+}
+
+.by {
+  color: var(--ink-soft);
+  font: 12.5px var(--f-ui);
+  margin: 0;
+}
+
+/* An empty week: a blank letter inviting the first owl. */
+.emptyLetter {
+  align-content: center;
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  justify-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.emptyLetter p { margin: 0; }
+.emptyTitle { font: italic 30px/1.15 var(--f-voice); }
+.emptyHint { color: var(--ink-soft); font: 14px var(--f-ui); }
+
+@container owl-stack (max-width: 559px) {
+  .card {
+    --pw: 39.75%;
+    --hh: 52px;
+    --sw: 40px;
+    --sh: 48px;
+    --pmw: 84px;
+    border-radius: 18px;
+  }
+
+  .letter { padding: 12px 12px 12px 6px; }
+  .quote { font-size: 68px; left: 2px; }
+  .postmark { right: 20px; top: 3px; }
+  .stamp { padding: 4px; }
+  .caption { font-size: 14.5px; line-height: 1.28; }
+  .caption[data-size="m"] { font-size: 13.5px; }
+  .caption[data-size="l"] { font-size: 12.5px; }
+  .sign { font-size: 17px; }
+  .swash { margin: 1px 0 3px 10px; width: 70px; }
+  .by { font-size: 11px; }
+  .emptyTitle { font-size: 22px; }
+}
+
+/* ---------- The vote dock: frosted night glass floating under the front card ---------- */
+.dock {
+  align-items: center;
+  animation: bob 4.5s ease-in-out infinite;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background: rgba(14, 20, 50, 0.8);
+  border: 1px solid rgba(185, 217, 235, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 16px 36px rgba(3, 6, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--parchment);
+  display: flex;
+  gap: 4px;
+  height: 62px;
+  padding: 0 14px 0 7px;
+}
+
+@keyframes bob {
+  50% { transform: translateY(-3px); }
+}
+
+.vote {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--parchment);
+  cursor: pointer;
+  display: grid;
+  height: 48px;
+  justify-items: center;
+  transition: background 0.15s, transform 0.12s;
+  width: 48px;
+}
+
+.vote:hover { background: rgba(185, 217, 235, 0.12); }
+.vote:active { transform: scale(0.9); }
+
+.vote:focus-visible {
+  outline: 2px solid var(--columbia);
+  outline-offset: 1px;
+}
+
+.vote[aria-disabled="true"] { cursor: progress; }
+
+.vote svg {
+  height: 26px;
+  overflow: visible;
+  width: 24px;
+}
+
+.vote [data-part="body"] {
+  fill: transparent;
+  stroke: currentColor;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+  transition: fill 0.2s;
+}
+
+.vote [data-part="facet"] {
+  fill: none;
+  opacity: 0.55;
+  stroke: currentColor;
+  stroke-width: 0.8;
+}
+
+.vote[data-direction="up"][aria-pressed="true"] { background: color-mix(in srgb, var(--g) 24%, transparent); }
+
+.vote[data-direction="up"][aria-pressed="true"] svg { filter: drop-shadow(0 0 4px var(--g)); }
+
+.vote[data-direction="up"][aria-pressed="true"] [data-part="body"] {
+  fill: var(--g);
+  stroke: rgba(255, 255, 255, 0.9);
+}
+
+.vote[data-direction="up"][aria-pressed="true"] [data-part="facet"] {
+  opacity: 0.8;
+  stroke: #fff;
+}
+
+.vote[data-direction="down"][aria-pressed="true"] { background: rgba(237, 226, 200, 0.16); }
+
+.vote[data-direction="down"][aria-pressed="true"] [data-part="body"] {
+  fill: var(--parchment);
+  stroke: var(--parchment);
+}
+
+.points {
+  color: var(--parchment);
+  display: inline-block;
+  font: 600 22px/1 var(--f-num);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.6ch;
+  text-align: center;
+}
+
+.ownTag {
+  border: 1px dashed rgba(185, 217, 235, 0.45);
+  border-radius: 999px;
+  color: var(--mist);
+  font: 14px/1 var(--f-label);
+  margin-left: 6px;
+  padding: 6px 11px;
+}
+
+.divider {
+  background: rgba(185, 217, 235, 0.25);
+  height: 30px;
+  margin: 0 8px 0 6px;
+  width: 1px;
+}
+
+.dockCrest {
+  height: 33px;
+  object-fit: contain;
+  width: 30px;
+}
+
+@media not ((min-width: 1024px) and (min-height: 600px)) {
+  .dock {
+    height: 52px;
+    padding: 0 12px 0 5px;
+  }
+
+  .vote {
+    height: 42px;
+    width: 42px;
+  }
+
+  .points { font-size: 19px; }
+
+  .dockCrest {
+    height: 27px;
+    width: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock { animation: none; }
+  .vote [data-part="body"] { transition: none; }
+}

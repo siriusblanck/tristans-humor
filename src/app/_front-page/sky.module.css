@@ -1,0 +1,78 @@
+/* The night sky behind every scene: fixed to the window, under everything else. */
+
+.sky {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+}
+
+.stars {
+  display: block;
+  fill: #fffaeb;
+  height: 100%;
+  width: 100%;
+}
+
+.warm { fill: var(--candle); }
+
+.dot,
+.spark {
+  animation: var(--t, 4s) ease-in-out infinite both;
+  height: var(--z);
+  margin: calc(var(--z) / -2) 0 0 calc(var(--z) / -2);
+  position: absolute;
+  width: var(--z);
+}
+
+/* Twinkling stars: brighten and dim at their own pace. */
+.dot {
+  animation-name: twinkle;
+  background: #fffaeb;
+  border-radius: 50%;
+  box-shadow: 0 0 6px 1px rgba(255, 250, 235, 0.5);
+}
+
+/* Glints: a four-point sparkle that flares, turns and fades, then rests a while. */
+.spark {
+  animation-name: glint;
+  background: radial-gradient(circle, #fff 0 1px, rgba(185, 217, 235, 0.55) 2px, transparent 4.5px);
+  filter: drop-shadow(0 0 3px rgba(185, 217, 235, 0.8));
+  opacity: 0;
+}
+
+.spark::before,
+.spark::after {
+  background: linear-gradient(90deg, transparent, #fff 50%, transparent) center / 100% 1.4px no-repeat;
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.spark::after { transform: rotate(90deg); }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.65); }
+  50% { opacity: 1; transform: none; }
+}
+
+@keyframes glint {
+  0%, 58%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  72% { opacity: 1; transform: scale(1) rotate(45deg); }
+  86% { opacity: 0.35; transform: scale(0.5) rotate(90deg); }
+}
+
+/* Behind an open sheet (or a page that is always veiled) the sky holds still: no need to
+ * re-blur a moving picture. */
+:global(html:has(dialog[open])) .dot,
+:global(html:has(dialog[open])) .spark,
+.sky[data-held] .dot,
+.sky[data-held] .spark { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dot,
+  .spark { animation: none; }
+
+  .dot { opacity: 0.7; }
+  .spark { opacity: 0.55; transform: scale(0.6) rotate(45deg); }
+}

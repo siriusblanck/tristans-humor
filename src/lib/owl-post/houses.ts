@@ -37,3 +37,25 @@ export function weeklyHouseCup(
     .map(({ id, name }) => ({ house: id, name, points: totals.get(id)! }))
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
 }
+
+export type RailHouse = HouseStanding & { level: number; leader: boolean };
+
+/**
+ * The hourglass rail: always the four houses in the same order. The leader's glass is full
+ * and the others fill in proportion; houses at or below zero show an empty glass. Nobody
+ * leads until someone has scored.
+ */
+export function houseRail(standings: readonly HouseStanding[]): RailHouse[] {
+  const points = new Map(standings.map(({ house, points }) => [house, points]));
+  const top = Math.max(0, ...HOUSES.map(({ id }) => points.get(id) ?? 0));
+  return HOUSES.map(({ id, name }) => {
+    const housePoints = points.get(id) ?? 0;
+    return {
+      house: id,
+      name,
+      points: housePoints,
+      level: top > 0 ? Math.max(0, housePoints) / top : 0,
+      leader: top > 0 && housePoints === top,
+    };
+  });
+}

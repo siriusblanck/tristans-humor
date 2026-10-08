@@ -10,7 +10,46 @@
   --hufflepuff: #a87a1c;
   --ravenclaw: #2d4a78;
   --slytherin: #2e5c45;
+
+  /* Hog Wumbia: night, stone, paper, one Columbia-blue seal. */
+  --ceiling: #121a3b;
+  --hall: #1c2650;
+  --hall-line: #2e3a6c;
+  --parchment: #ede2c8;
+  --parchment-shade: #dccdaa;
+  --ink: #2b2219;
+  --ink-soft: #5e4e3c;
+  --columbia: #b9d9eb;
+  --seal: #7fa9cc;
+  --seal-deep: #3f6d96;
+  --candle: #f2c46b;
+  --mist: #aeb7d6;
+  --ruby: #d2505a;
+  --topaz: #e7b33f;
+  --sapphire: #7398ea;
+  --emerald: #45b884;
+  --ruby-deep: #8c2f23;
+  --topaz-deep: #7a560c;
+  --sapphire-deep: #2d4a78;
+  --emerald-deep: #2e5c45;
+  --f-mark: var(--font-grenze), "UnifrakturMaguntia", Georgia, serif;
+  --f-voice: var(--font-fell), Georgia, "Times New Roman", serif;
+  --f-label: var(--font-fell-sc), var(--font-fell), Georgia, serif;
+  --f-ui: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --f-num: var(--font-geist-mono), ui-monospace, Menlo, monospace;
+  --ease-flight: cubic-bezier(0.3, 0, 0.2, 1);
+  --ease-settle: cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .27 0 0 0 0 .15 0 0 0 .10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* A glow over the rooftops; the stars themselves are drawn by the Starfield component. */
+  --sky-glow: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(185, 217, 235, 0.1), transparent 70%);
 }
+
+/* Each house's gem: bright for sand and glows on the night ground, deep for text on paper. */
+[data-house="gryffindor"] { --g: var(--ruby); --gd: var(--ruby-deep); }
+[data-house="hufflepuff"] { --g: var(--topaz); --gd: var(--topaz-deep); }
+[data-house="ravenclaw"] { --g: var(--sapphire); --gd: var(--sapphire-deep); }
+[data-house="slytherin"] { --g: var(--emerald); --gd: var(--emerald-deep); }
 
 @theme inline {
   --color-background: var(--background);
@@ -88,16 +127,13 @@ button:disabled {
 }
 
 .account-wordmark {
-  font-family: var(--font-montserrat), Arial, sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.065em;
+  font-family: var(--f-mark);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  line-height: 1;
   text-decoration: none;
   white-space: nowrap;
-}
-
-.account-wordmark span {
-  color: #89897a;
 }
 
 .account-dateline {
@@ -150,7 +186,7 @@ button:disabled {
 }
 
 .public-info h1 {
-  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
   font-size: clamp(2.4rem, 6vw, 4rem);
   font-weight: 600;
   letter-spacing: -0.07em;
@@ -181,7 +217,7 @@ button:disabled {
 }
 
 .error-screen h1 {
-  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
   font-size: clamp(3.5rem, 6.8vw, 6.2rem);
   font-weight: 700;
   letter-spacing: -0.075em;

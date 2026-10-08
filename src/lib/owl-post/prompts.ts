@@ -26,7 +26,7 @@ export function buildCaptionPrompt({ character, owlPost, twist }: {
   twist: string | null;
 }): CaptionPrompt {
   const system = [
-    `You are ${character.name}, writing a caption for "Humour me...", a wizarding-world humour feed for Columbia University students who are new to New York City.`,
+    `You are ${character.name}, writing a caption for "Hog Wumbia", a wizarding-world humour feed for Columbia University students who are new to New York City.`,
     `React to today's Owl Post in ${character.name}'s unmistakable voice, as if you had just arrived in New York and found yourself in this moment.`,
     "Write one or two sentences, under 200 characters. Be witty and warm; tease the city, never the reader. Keep it PG-13: no slurs, no real people, no hashtags, no emojis.",
     "Then describe the single picture an illustrator should paint of this moment in one sentence. In that description, never name any character, person, school, or house: describe the character only by appearance.",

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { AVATAR_MAX_BYTES, validateAvatar, validateAvatarMetadata } from "@/lib/avatars";
+import { AVATAR_MAX_BYTES, stablePhoto, validateAvatar, validateAvatarMetadata } from "@/lib/avatars";
 
 /* Behavior inventory:
- * Optional input: absent/empty browser placeholder; named empty file and text are errors.
+ * Optional input: absent/empty browser placeholder (also as the server action decoder names
+ * it); an empty file that claims to be an image, and text, are errors.
  * Types: JPG/PNG/WebP headers; unsupported, spoofed MIME, truncated, and mismatched bytes.
  * Boundary: exactly 3 MiB allowed; one byte over rejected. One byte and zero distinguished.
  * Invariant: arbitrary user filenames never determine the storage extension.
+ * Shown photo: each page load signs a fresh URL for the same file; the page keeps showing the
+ * URL it already loaded until the file itself changes or is removed.
  */
 const images = [
   { type: "image/jpeg", extension: "jpg", bytes: [0xff, 0xd8, 0xff, 0xe0] },
@@ -22,6 +25,12 @@ describe("avatar validation", () => {
   it("treats an absent upload as optional", async () => {
     expect(await validateAvatar(null)).toBeNull();
     expect(await validateAvatar(new File([], ""))).toBeNull();
+  });
+
+  it("treats the browser's empty file placeholder as no upload, whatever name the server gives it", async () => {
+    // Server actions decode with busboy, which drops the empty filename, so React names it "undefined".
+    expect(await validateAvatar(new File([], "undefined", { type: "application/octet-stream" }))).toBeNull();
+    expect(await validateAvatar(new File([], "", { type: "application/octet-stream" }))).toBeNull();
   });
 
   it("rejects a named empty upload", async () => {
@@ -60,5 +69,21 @@ describe("avatar validation", () => {
       if (size > AVATAR_MAX_BYTES) expect(await validateAvatar(file)).toEqual({ error: "Choose a photo smaller than 3 MB." });
       else expect(await validateAvatar(file)).toEqual({ file, extension: "png" });
     }
+  });
+});
+
+describe("shown photo", () => {
+  const first = { path: "u/one.png", url: "https://x/one.png?token=a" };
+
+  it("keeps the URL already shown while the file stays the same", () => {
+    expect(stablePhoto(first, { path: "u/one.png", url: "https://x/one.png?token=b" })).toBe(first);
+  });
+
+  it("switches when the photo changes, appears, or is removed", () => {
+    const second = { path: "u/two.png", url: "https://x/two.png?token=c" };
+    expect(stablePhoto(first, second)).toBe(second);
+    expect(stablePhoto(null, first)).toBe(first);
+    expect(stablePhoto(first, null)).toBeNull();
+    expect(stablePhoto(null, null)).toBeNull();
   });
 });

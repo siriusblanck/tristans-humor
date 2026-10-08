@@ -1,0 +1,228 @@
+/* The owl delivery (once a week) and the sign-in letter. */
+
+.intro {
+  display: none;
+  inset: 0;
+  position: fixed; /* the scene on desktop (its transform makes it the containing block), the window on phones */
+  z-index: 60;
+}
+
+/* "play" while the owl flies and the letter is read; "dock" while the page deals itself in. */
+:global(html[data-intro]) .intro { display: block; }
+
+.courier {
+  height: 240px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  transform: translate(1260px, -170px); /* waiting off-stage, top right */
+  transform-origin: 0 0;
+  width: 170px;
+  will-change: transform;
+}
+
+.courierOwl {
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 170px;
+}
+
+.envelope {
+  height: 128px;
+  left: -15px;
+  perspective: 700px;
+  position: absolute;
+  top: 94px;
+  width: 200px;
+}
+
+.envelopeBack {
+  background: #e1d3b0;
+  border-radius: 4px;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+  inset: 0;
+  position: absolute;
+}
+
+.envelopeFront {
+  background: var(--grain), var(--parchment);
+  border-radius: 4px;
+  clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+  inset: 0;
+  position: absolute;
+}
+
+.envelopeFlap {
+  background: #e8dcbd;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  height: 62%;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform-origin: 50% 0;
+  z-index: 2;
+}
+
+.envelopeSeal {
+  --d: 40px;
+  left: calc(50% - 20px);
+  position: absolute;
+  top: calc(62% - 22px);
+  z-index: 3;
+}
+
+.hero {
+  align-items: center;
+  background: var(--grain), var(--parchment);
+  border-radius: 6px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+  color: var(--ink);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  left: 340px;
+  opacity: 0;
+  padding: 34px 40px 30px;
+  position: absolute;
+  text-align: center;
+  top: 228px;
+  width: 520px;
+}
+
+.heroHead {
+  font: 400 46px/1.06 var(--f-voice);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.heroScene {
+  color: var(--ink-soft);
+  font: italic 17px/1.4 var(--f-voice);
+  margin: 0;
+  max-width: 40ch;
+}
+
+.heroSub {
+  color: var(--seal-deep);
+  font: 14px/1 var(--f-label);
+  letter-spacing: 0.08em;
+}
+
+.skip {
+  background: rgba(18, 26, 59, 0.6);
+  bottom: 28px;
+  position: absolute;
+  right: 28px;
+  z-index: 2;
+}
+
+@media not ((min-width: 1024px) and (min-height: 600px)) {
+  .courier { transform: translate(calc(100vw + 60px), -170px) scale(0.8); }
+
+  .hero {
+    left: 16px;
+    padding: 28px 22px 24px;
+    top: 30vh;
+    width: calc(100vw - 32px);
+  }
+
+  .heroHead { font-size: 32px; }
+  .heroScene { font-size: 15px; }
+  .skip { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); right: 16px; }
+}
+
+/* ---------- The sign-in letter ---------- */
+.letterDialog {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  margin: auto;
+  max-height: none;
+  max-width: calc(100vw - 32px);
+  overflow: visible;
+  padding: 0;
+}
+
+.letterDialog::backdrop {
+  -webkit-backdrop-filter: blur(10px) brightness(0.75);
+  backdrop-filter: blur(10px) brightness(0.75);
+  background: rgba(8, 12, 32, 0.5);
+}
+
+.letterDialog[open]::backdrop { animation: fadeIn 0.22s var(--ease-out); }
+
+.letter {
+  background: var(--grain), var(--parchment);
+  border-radius: 8px;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 60px 48px 34px;
+  position: relative;
+  text-align: center;
+  width: 520px;
+  max-width: 100%;
+}
+
+.letterDialog[open] .letter { animation: letterIn 0.52s var(--ease-settle) both; }
+
+.letterSeal {
+  --d: 58px;
+  left: calc(50% - 29px);
+  position: absolute;
+  top: -29px;
+}
+
+.letterDialog[open] .letterSeal { animation: stamp 0.42s 0.26s var(--ease-settle) both; }
+
+.letterTitle {
+  font: italic 400 38px/1.08 var(--f-voice);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.letterSub {
+  color: var(--ink-soft);
+  font: 15px/1.5 var(--f-ui);
+  margin: 0 0 10px;
+}
+
+.letterActions {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes letterIn {
+  0% { opacity: 0; transform: translateY(160px) scale(0.8) rotate(-3deg); }
+  70% { opacity: 1; transform: translateY(-8px) scale(1.02) rotate(0.5deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes stamp {
+  0% { opacity: 0; transform: scale(1.8); }
+  70% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 1; transform: none; }
+}
+
+@media (min-width: 1024px) and (min-height: 600px) {
+  .letterDialog { zoom: var(--s, 1); }
+}
+
+@media not ((min-width: 1024px) and (min-height: 600px)) {
+  .letter { padding: 52px 22px 28px; }
+  .letterTitle { font-size: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letterDialog[open] .letter,
+  .letterDialog[open] .letterSeal,
+  .letterDialog[open]::backdrop { animation: fadeIn 0.15s both; }
+}

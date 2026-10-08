@@ -73,7 +73,7 @@ try {
       assert.equal(response.status, 307); assert.equal(response.headers.get("location"), destination);
     }
     const publicHome = await requestLocal("/");
-    assert.equal(publicHome.status, 200); assert((await publicHome.text()).includes("Owl Post"), "signed-out visitors see the front page");
+    assert.equal(publicHome.status, 200); assert((await publicHome.text()).includes("Hog Wumbia"), "signed-out visitors see the front page");
     const signedOutProfile = await requestLocal("/profile");
     assert.equal(signedOutProfile.status, 307); assert.equal(new URL(signedOutProfile.headers.get("location"), process.env.TEST_APP_URL).pathname, "/");
     const gallery = await requestLocal("/gallery");
@@ -110,8 +110,9 @@ try {
     assert(html.includes('value="Test"') && html.includes('value="User"'), "profile form contains saved names");
     const home = await requestLocal("/", true);
     assert.equal(home.status, 200);
-    assert((await home.text()).includes("Send the owl"), "signed-in front page includes the composer");
-    console.log("PASS completed profile opens the front page with the composer and persists settings");
+    const homeHtml = await home.text();
+    assert(homeHtml.includes("Send in your owl") && homeHtml.includes("Test’s account"), "signed-in front page offers sending an owl and the account menu");
+    console.log("PASS completed profile opens the front page signed in and persists settings");
   }
 
   // Owl Post: a server-written generation by the owner, voted on by the other user.

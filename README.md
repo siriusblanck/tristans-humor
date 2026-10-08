@@ -1,25 +1,28 @@
-# Humour me... · Owl Post
+# Hog Wumbia
 
-A daily caption contest for Columbia students who are new to New York. Every day there is one **Owl Post**, a New York or Columbia moment ("The 1 train skips 116th Street. Again."). Signed-in readers pick one of seven wizarding-world writers, add an optional twist, and Gemini writes that character's caption and paints the scene. Everyone can browse the feed; signed-in readers award or take away points, and points on your owls count for your house in a weekly **House Cup**.
+Columbia humour, delivered by owl. Every week there is one **Owl Post** prompt, a New York or Columbia moment ("The halal cart on Broadway at 1 a.m."). Signed-in readers pick one of seven wizarding-world writers, add an optional twist, and Gemini writes that character's caption and paints the scene. Everyone can browse the owls; signed-in readers award or take away points, and points on your owls count for your house in the week's hourglasses.
 
 The existing assignment #2/#3 Supabase and Vercel projects are reused.
 
 ## App flow
 
-1. `/` is the public front page: today's Owl Post, the House Cup, the writer picker, today's owls (most points first), and the past week's best. Signed-out visitors can read everything; the vote buttons and the writer picker invite them to sign in.
+1. `/` is the public front page, drawn as a glittering night sky over Low Library (the stars are seeded, so server and browser draw the same sky). Once a week (per browser) an owl delivers the prompt as a letter, which flies up into the prompt bar; tap the bar to see it again. On the left, each house's crest sits beside a turned-wood hourglass holding the week's points; sand trickles while the top still holds some, and a glass shakes when points arrive. In the middle is a stack of this week's owls as letters (most points first): swipe, use ← →, or ‹ › to browse; browsing never votes. The vote dock floats under the front card. Signed-out visitors can read everything; voting or sending opens the sign-in letter, and after Google they land back on the same owl.
 2. **Sign in** starts Google OAuth through Supabase (PKCE). The app's `redirectTo` is exactly `<current-origin>/auth/callback`.
 3. `/auth/callback` exchanges the code for a cookie session. Users missing a name or a house go to `/profile`; everyone else returns to `/`.
-4. The writer picker is the word **h u m o r m e**: each letter is one character (Hagrid, Umbridge, McGonagall, Ollivander, Ron, Molly, Errol). Choose a letter, add a twist (optional, 140 characters), and **Send the owl**. Each account can send 3 owls a day; the whole app sends at most 100.
-5. Selecting ▲ or ▼ on someone else's owl inserts your vote; selecting it again removes it. You can't vote on your own owls.
-6. `/gallery` permanently redirects to `/`.
+4. **Send in your owl** blurs everything but the prompt bar and fans out the seven writers as cards (Hagrid, Umbridge, McGonagall, Ollivander, Ron, Molly, Errol). Choose one, add a twist (optional, 140 characters), and **Send owl**; an owl carries the letter off until the caption and picture are ready, then your owl lands on top of the stack. Each account can send 3 owls a day; the whole app sends at most 100.
+5. The gem in the vote dock awards a point (a copy flies into the writer's house hourglass); the split gem takes one. Selecting it again removes your vote. Your own owls show "Your owl" instead.
+6. Signed in, your avatar is your profile photo (or initial) ringed in your house's gem; it opens a small menu. **Profile** opens your profile as a full-screen sheet over the page: the photo lifts out of the corner into the sheet, and picking a house re-colours it. Saving uses the same `saveProfile` action as before, then the sheet flies back into the avatar. `/profile` shows the same sheet on its own, which is where first sign-in lands.
+7. `/gallery` permanently redirects to `/`.
 
-`src/proxy.ts` refreshes session cookies; pages and server actions verify the user again before reading or writing. Reduced-motion preferences turn off the letter and photo animations.
+`src/proxy.ts` refreshes session cookies; pages and server actions verify the user again before reading or writing. With reduced motion, the delivery fades instead of flying, browsing is instant, and nothing bobs, flickers, twinkles or shakes.
+
+The front page's look follows the approved design scope: `src/app/_front-page/` holds its components and CSS modules. On desktop it is a 1200 × 760 scene scaled to the window (an inline boot script in the root layout sets the scale and the once-a-week delivery flag before first paint); smaller windows get the compact phone layout.
 
 ## How a post is made
 
 `src/lib/owl-post/create-generation.ts` holds the decisions; every side effect is injected, so the flow is unit-tested without a network or database.
 
-1. Load the cast and today's Owl Post (picked by New York calendar day), then **reserve a slot** with `claim_generation_slot()`. It counts today's posts plus in-flight reservations and reserves one under a Postgres advisory lock, so simultaneous requests can't all slip under the limit before any of them is saved. The reservation is released when the post is saved or fails, and expires after 3 minutes if a server instance dies.
+1. Load the cast and this week's Owl Post (picked by New York week, Monday to Sunday; the rotation began the week of Oct 5 2026 with the halal cart), then **reserve a slot** with `claim_generation_slot()`. It counts today's posts plus in-flight reservations and reserves one under a Postgres advisory lock, so simultaneous requests can't all slip under the limit before any of them is saved. The reservation is released when the post is saved or fails, and expires after 3 minutes if a server instance dies.
 2. **Caption:** the text model writes `{ caption, scene }` as JSON in the character's voice. The reader's twist is fenced in `<twist>` tags and treated as a story detail, not instructions.
 3. **Picture:** the image model paints `scene`. Character and franchise names are scrubbed from the image prompt; each character is described by their `appearance` instead, which avoids refusals for named fictional characters.
 4. The picture is uploaded to the public `generations` bucket, then the row is inserted with both prompts, both model ids, and the scene as alt text. If the insert fails, the upload is removed.
@@ -104,8 +107,8 @@ npm run test:coverage
 npm run build
 ```
 
-The unit tests cover the New York calendar (evening and daylight-saving boundaries), Owl Post rotation, prompt fencing and name scrubbing, Gemini refusal/empty/malformed responses and image byte checks, daily limits, the generation flow's ordering and cleanup, vote input and error mapping, feed parsing, the House Cup, and the existing sign-in, profile, and photo behavior.
+The unit tests cover the New York calendar (evening and daylight-saving boundaries), the weekly Owl Post rotation and its labels, the house hourglasses, stack order and vote math, the boot script and the sign-in return note, the seeded night sky, profile steps and signed photo URLs, prompt fencing and name scrubbing, Gemini refusal/empty/malformed responses and image byte checks, daily limits, the generation flow's ordering and cleanup, vote input and error mapping, feed parsing, the House Cup, and the existing sign-in, profile, and photo behavior.
 
-`npm run test:e2e` runs the signed-out journeys in Playwright (desktop and phone) against a production build on port 3200: the public front page, reading owls without being able to vote, redirects, the cancelled-sign-in message, legal pages, and no sideways scrolling. It seeds one owl by a disposable author and deletes it afterwards. Google sign-in itself isn't automated.
+`npm run test:e2e` runs the signed-out journeys in Playwright (desktop and phone) against a production build on port 3200: the weekly delivery and Skip, the prompt bar, hourglasses and letter cards, browsing by keys, buttons, and swipe, the sign-in letter for votes and sends, redirects, the cancelled-sign-in message, legal pages, and no sideways scrolling. It seeds two owls by disposable authors and deletes them afterwards. Google sign-in itself isn't automated.
 
 For a live check against the Supabase project, sign in to the Supabase CLI and run `npm run test:integration` (add `TEST_APP_URL=http://localhost:3000` to also check the app's routes). It creates disposable users and cleans them up.

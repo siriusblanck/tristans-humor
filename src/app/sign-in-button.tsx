@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function SignInButton({ label = "Sign in", className = "text-button", initialError }: {
+export default function SignInButton({ label = "Sign in", className = "text-button", initialError, icon, onStart }: {
   label?: string;
   className?: string;
   initialError?: string;
+  icon?: ReactNode;
+  /** Runs just before leaving for Google (e.g. to remember where the visitor was). */
+  onStart?: () => void;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(initialError);
@@ -17,6 +20,7 @@ export default function SignInButton({ label = "Sign in", className = "text-butt
     setError(undefined);
 
     try {
+      onStart?.();
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -32,6 +36,7 @@ export default function SignInButton({ label = "Sign in", className = "text-butt
   return (
     <>
       <button className={className} type="button" onClick={signIn} disabled={pending} aria-busy={pending}>
+        {icon}
         {pending ? "Opening Google..." : label}
       </button>
       {error && <span className="sign-in-error" role="alert">{error}</span>}

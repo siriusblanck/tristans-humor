@@ -1,4 +1,4 @@
-import { dayNumber, type IsoDate } from "./dates";
+import { dayNumber, weekStart, type IsoDate } from "./dates";
 
 export type OwlPost = {
   id: string;
@@ -7,9 +7,21 @@ export type OwlPost = {
   scene: string;
 };
 
-/** Everyone sees the same prompt for a New York day; the pool repeats once exhausted. */
+// The prompt became weekly in the week of Monday 2026-10-05. That week keeps the prompt that
+// was already running when the rotation switched (sort order 7, the halal cart), so the owls
+// sent before the switch still sit under the right prompt.
+const ROTATION_START = "2026-10-05" as IsoDate;
+const ROTATION_START_INDEX = 7;
+
+/** Whole New York weeks (Monday to Sunday) since the weekly rotation began; negative before it. */
+export function weeksSinceRotationStart(date: IsoDate) {
+  return Math.floor((dayNumber(weekStart(date)) - dayNumber(ROTATION_START)) / 7);
+}
+
+/** Everyone sees the same prompt for a New York week; the pool repeats once exhausted. */
 export function pickOwlPost(posts: readonly OwlPost[], date: IsoDate): OwlPost | null {
   if (posts.length === 0) return null;
   const ordered = [...posts].sort((a, b) => a.sort_order - b.sort_order);
-  return ordered[dayNumber(date) % ordered.length];
+  const index = (ROTATION_START_INDEX + weeksSinceRotationStart(date)) % ordered.length;
+  return ordered[(index + ordered.length) % ordered.length];
 }

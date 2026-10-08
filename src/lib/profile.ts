@@ -38,6 +38,19 @@ export function isProfileComplete<T extends CompletionFields>(profile: T | null)
   return Boolean(profile?.first_name?.trim() && profile?.last_name?.trim() && profile?.house);
 }
 
+/** Where a profile stands: no name yet, a name but no house (from before the House Cup), or complete. */
+export type ProfileStep = "name" | "house" | "edit";
+
+export function profileStep(profile: CompletionFields | null): ProfileStep {
+  if (isProfileComplete(profile)) return "edit";
+  return profile?.first_name?.trim() && profile.last_name?.trim() ? "house" : "name";
+}
+
+/** The letter on your avatar when there's no photo. Code points keep emoji and CJK whole. */
+export function initialOf(name: string) {
+  return Array.from(name.trim())[0]?.toLocaleUpperCase("en-US") ?? "?";
+}
+
 /** The byline shown on public posts: "Tristan R." Code points keep emoji and CJK initials whole. */
 export function publicName(profile: { first_name: string; last_name: string }) {
   const initial = Array.from(profile.last_name.trim())[0];

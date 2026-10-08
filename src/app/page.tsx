@@ -1,18 +1,16 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import AccountNav from "@/app/account-nav";
-import SignInButton from "@/app/sign-in-button";
+import { signedPhoto } from "@/lib/avatar-urls";
 import { getAccount, getProfile } from "@/lib/auth";
 import { characterHue } from "@/lib/characters";
-import { formatDateline, formatMonthDay, formatWeekday, weekStart } from "@/lib/owl-post/dates";
+import { formatPostmark, formatWeekRange } from "@/lib/owl-post/dates";
+import { houseRail } from "@/lib/owl-post/houses";
 import { remainingToday } from "@/lib/owl-post/limits";
 import { loadFrontPage } from "@/lib/owl-post/repository";
-import { isProfileComplete } from "@/lib/profile";
-import Composer from "./_front-page/composer";
-import FeedSection from "./_front-page/feed-section";
-import HouseCup from "./_front-page/house-cup";
-import LetterPicker, { type CastOption } from "./_front-page/letter-picker";
-import styles from "./_front-page/front-page.module.css";
+import { initialOf, isProfileComplete } from "@/lib/profile";
+import FrontPageApp from "./_front-page/front-page-app";
+import LowLibrary from "./_front-page/low-library";
+import Starfield from "./_front-page/starfield";
+import type { FrontPageData, Viewer } from "./_front-page/types";
 
 // Generating a caption and a picture can take most of a minute.
 export const maxDuration = 120;
@@ -24,57 +22,52 @@ const AUTH_MESSAGES: Record<string, string> = {
 
 export default async function FrontPage({ searchParams }: PageProps<"/">) {
   const { supabase, user } = await getAccount();
-  if (user && !isProfileComplete(await getProfile(supabase, user.id))) redirect("/profile");
+  const profile = user ? await getProfile(supabase, user.id) : null;
+  if (user && !isProfileComplete(profile)) redirect("/profile");
 
-  const page = await loadFrontPage(supabase, user?.id ?? null, new Date());
+  const [page, photo] = await Promise.all([
+    loadFrontPage(supabase, user?.id ?? null, new Date()),
+    signedPhoto(supabase, profile?.avatar_path ?? null),
+  ]);
   const { auth } = await searchParams;
-  const signedIn = Boolean(user);
-  const cast: CastOption[] = page.cast.flatMap(({ id, letter, name, image_url, sort_order }) =>
-    name ? [{ id, letter, name, imageUrl: image_url, hue: characterHue(sort_order) }] : []);
+  const viewer: Viewer = user && isProfileComplete(profile)
+    ? {
+      signedIn: true,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      initial: initialOf(profile.first_name),
+      house: profile.house,
+      email: user.email ?? "",
+      photo,
+    }
+    : { signedIn: false };
 
-  return (
-    <div className={styles.page}>
-      <AccountNav current="front" signedIn={signedIn} dateline={formatDateline(page.date)}
-        authError={typeof auth === "string" ? AUTH_MESSAGES[auth] : undefined} />
+  const data: FrontPageData = {
+    prompt: page.owlPost ? { headline: page.owlPost.headline, scene: page.owlPost.scene } : null,
+    weekLabel: formatWeekRange(page.monday),
+    weekKey: page.monday,
+    rail: houseRail(page.standings),
+    owls: page.owls.map((item) => ({
+      id: item.id,
+      caption: item.caption,
+      imageUrl: item.imageUrl,
+      imageAlt: item.imageAlt,
+      authorDisplay: item.authorDisplay,
+      house: item.house,
+      writer: item.character?.name ?? "A mystery writer",
+      upvotes: item.upvotes,
+      downvotes: item.downvotes,
+      score: item.score,
+      myVote: item.myVote,
+      isMine: item.isMine,
+      postmark: formatPostmark(item.owlPostDate),
+    })),
+    writers: page.cast.flatMap(({ id, name, image_url, sort_order }) =>
+      name ? [{ id, name, imageUrl: image_url, hue: characterHue(sort_order) }] : []),
+    viewer,
+    remaining: remainingToday(page.usedToday),
+    authError: typeof auth === "string" ? AUTH_MESSAGES[auth] : undefined,
+  };
 
-      <main className={styles.main}>
-        <div className={styles.hero}>
-          <section className={styles.owlPost} aria-labelledby="owl-post">
-            <p className="eyebrow">Owl Post · {formatWeekday(page.date)}</p>
-            <h1 id="owl-post">{page.owlPost?.headline ?? "Today's Owl Post is still in the air."}</h1>
-            {page.owlPost && <p>{page.owlPost.scene}</p>}
-          </section>
-          <HouseCup standings={page.standings} weekOf={formatMonthDay(weekStart(page.date))} />
-        </div>
-
-        {signedIn ? (
-          <Composer cast={cast} remaining={remainingToday(page.usedToday)} />
-        ) : (
-          <div className={styles.composer}>
-            <LetterPicker cast={cast} selected={null} />
-            <p className={styles.invite}>
-              Pick a writer, add a twist, and send today&apos;s owl <SignInButton label="by Signing In" className={styles.inviteLink} />
-            </p>
-          </div>
-        )}
-
-        <FeedSection
-          id="today"
-          title="Today's owls"
-          items={page.today}
-          signedIn={signedIn}
-          prioritizeFirst
-          empty={signedIn ? "No owls yet today. Pick a letter above and send the first." : "No owls yet today. Sign in and send the first."}
-        />
-        <FeedSection id="earlier" title="The past week" items={page.earlier} signedIn={signedIn} />
-      </main>
-
-      <footer className={styles.footer}>
-        <nav aria-label="App information">
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-        </nav>
-      </footer>
-    </div>
-  );
+  return <FrontPageApp data={data} backdrop={<LowLibrary />} sky={<Starfield />} />;
 }

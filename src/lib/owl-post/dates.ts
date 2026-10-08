@@ -13,6 +13,7 @@ const newYorkFormatter = new Intl.DateTimeFormat("en-CA", {
 const datelineFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric" });
 const monthDayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", day: "numeric" });
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long" });
+const shortMonthFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short" });
 
 export function parseIsoDate(value: unknown): IsoDate | null {
   if (typeof value !== "string") return null;
@@ -61,4 +62,20 @@ export function formatMonthDay(date: IsoDate) {
 
 export function formatWeekday(date: IsoDate) {
   return weekdayFormatter.format(new Date(toUtcMidnight(date)));
+}
+
+/** "Oct 5 – 11", or "Sep 28 – Oct 4" when the week crosses into a new month. */
+export function formatWeekRange(monday: IsoDate) {
+  const start = new Date(toUtcMidnight(monday));
+  const end = new Date(toUtcMidnight(addDays(monday, 6)));
+  const startMonth = shortMonthFormatter.format(start);
+  const endMonth = shortMonthFormatter.format(end);
+  const endLabel = endMonth === startMonth ? `${end.getUTCDate()}` : `${endMonth} ${end.getUTCDate()}`;
+  return `${startMonth} ${start.getUTCDate()} – ${endLabel}`;
+}
+
+/** The day on an owl's postmark, e.g. "OCT 8". */
+export function formatPostmark(date: IsoDate) {
+  const day = new Date(toUtcMidnight(date));
+  return `${shortMonthFormatter.format(day).toUpperCase()} ${day.getUTCDate()}`;
 }
