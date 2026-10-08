@@ -9,7 +9,7 @@ export default function PublicInfo({ title, children }: { title: string; childre
         <Link href="/">Sign in</Link>
       </header>
       <main className="public-info">
-        <p className="eyebrow">Humour me · Updated October 1, 2026</p>
+        <p className="eyebrow">Humour me · Updated October 8, 2026</p>
         <h1>{title}</h1>
         {children}
         <nav aria-label="App information">

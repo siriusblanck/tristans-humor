@@ -1,16 +1,59 @@
-# Humour me...
+# Humour me... · Owl Post
 
-An animated character gallery with Google sign-in and a personal profile. The existing assignment #2 Supabase project and Vercel project are reused.
+A daily caption contest for Columbia students who are new to New York. Every day there is one **Owl Post**, a New York or Columbia moment ("The 1 train skips 116th Street. Again."). Signed-in readers pick one of seven wizarding-world writers, add an optional twist, and Gemini writes that character's caption and paints the scene. Everyone can browse the feed; signed-in readers award or take away points, and points on your owls count for your house in a weekly **House Cup**.
+
+The existing assignment #2/#3 Supabase and Vercel projects are reused.
 
 ## App flow
 
-1. `/` reveals **Humour me...** in the top left, followed by an underlined **Signing in** button in the bottom right.
-2. Clicking the button starts Google OAuth through Supabase using the PKCE flow. The app's `redirectTo` is exactly `<current-origin>/auth/callback`, with no additional query parameters.
-3. `/auth/callback` exchanges the authorization code for a cookie session. Users missing either name go to `/profile` to introduce themselves.
-4. After the user saves both names, `/gallery` plays the original letter-to-card animation and shows the character images.
-5. **Profile** lets users edit their names and choose an optional photo. **Sign out** ends this browser's session and returns to the opening screen.
+1. `/` is the public front page: today's Owl Post, the House Cup, the writer picker, today's owls (most points first), and the past week's best. Signed-out visitors can read everything; the vote buttons and the writer picker invite them to sign in.
+2. **Sign in** starts Google OAuth through Supabase (PKCE). The app's `redirectTo` is exactly `<current-origin>/auth/callback`.
+3. `/auth/callback` exchanges the code for a cookie session. Users missing a name or a house go to `/profile`; everyone else returns to `/`.
+4. The writer picker is the word **h u m o r m e**: each letter is one character (Hagrid, Umbridge, McGonagall, Ollivander, Ron, Molly, Errol). Choose a letter, add a twist (optional, 140 characters), and **Send the owl**. Each account can send 3 owls a day; the whole app sends at most 100.
+5. Selecting ▲ or ▼ on someone else's owl inserts your vote; selecting it again removes it. You can't vote on your own owls.
+6. `/gallery` permanently redirects to `/`.
 
-`/gallery` and `/profile` verify the user on the server before fetching data. The Next.js 16 `src/proxy.ts` refreshes session cookies; pages and server actions independently verify identity. Reduced-motion preferences disable the entrance transitions and letter movement.
+`src/proxy.ts` refreshes session cookies; pages and server actions verify the user again before reading or writing. Reduced-motion preferences turn off the letter and photo animations.
+
+## How a post is made
+
+`src/lib/owl-post/create-generation.ts` holds the decisions; every side effect is injected, so the flow is unit-tested without a network or database.
+
+1. Load the cast and today's Owl Post (picked by New York calendar day), then **reserve a slot** with `claim_generation_slot()`. It counts today's posts plus in-flight reservations and reserves one under a Postgres advisory lock, so simultaneous requests can't all slip under the limit before any of them is saved. The reservation is released when the post is saved or fails, and expires after 3 minutes if a server instance dies.
+2. **Caption:** the text model writes `{ caption, scene }` as JSON in the character's voice. The reader's twist is fenced in `<twist>` tags and treated as a story detail, not instructions.
+3. **Picture:** the image model paints `scene`. Character and franchise names are scrubbed from the image prompt; each character is described by their `appearance` instead, which avoids refusals for named fictional characters.
+4. The picture is uploaded to the public `generations` bucket, then the row is inserted with both prompts, both model ids, and the scene as alt text. If the insert fails, the upload is removed.
+
+## Data and row-level security
+
+Migrations: `supabase/migrations/20261008000000_owl_post.sql`, `20261008010000_generation_alt_text.sql`, and `20261008020000_generation_claims.sql`.
+
+Supabase grants `anon` and `authenticated` every table privilege by default, and RLS doesn't govern `TRUNCATE`. Every table therefore starts from `revoke all` and gets only what the app uses; RLS policies then filter rows.
+
+| Table | Signed out (`anon`) | Signed in (`authenticated`) | Written by |
+| --- | --- | --- | --- |
+| `characters` | read | read | migrations only |
+| `owl_posts` (21 prompts) | read | read | migrations only |
+| `profiles` (+ `house`) | — | read/update **own row** | the user |
+| `generations` | read display columns only | display columns + `author_id` | **server only** (secret key) |
+| `votes` | — | read/insert/update/delete **own votes**, never on own posts | the user, through `cast_vote()` |
+| `house_points` (view, `security_invoker`) | read | read | — |
+| `generation_claims` (daily-limit reservations) | — | — | **server only**, via `claim_generation_slot()` |
+| Storage `generations` (public) | public URLs | public URLs | **server only** |
+
+- Prompts, model ids, and twists are stored on `generations` but not granted to clients.
+- `cast_vote(target_generation, vote)` is `SECURITY INVOKER`: it runs with the caller's grants and policies. Users can only insert `(generation_id, value)`; `voter_id` always comes from `auth.uid()`.
+- A `SECURITY DEFINER` trigger keeps `upvotes`/`downvotes` current, so votes can stay private to their owners.
+- Users have no write access to `generations` at all, so nobody can skip Gemini (or the daily limit) and post their own text. Only `src/lib/supabase/admin.ts`, used after the server verifies the session, holds the secret key.
+
+Check every grant and policy against the live project (the transaction is rolled back):
+
+```bash
+{ echo "begin;"; cat supabase/tests/owl_post_rls.sql; echo "rollback;"; } > /tmp/rls.sql
+supabase db query --linked -f /tmp/rls.sql -o table
+```
+
+It prints one PASS/FAIL line per check (31 checks).
 
 ## Run locally
 
@@ -20,33 +63,16 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set the existing project's public values in `.env.local`:
+| Variable | Where it's used |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser and server |
+| `SUPABASE_SECRET_KEY` | server only: writes generations and their pictures |
+| `GEMINI_API_KEY` | server only. **Image models have no free tier:** the key's Google Cloud project needs billing enabled (minimum $5 prepay, about $0.034 per picture). Without it, captions work but every send fails with a quota error. |
+| `GEMINI_TEXT_MODEL`, `GEMINI_IMAGE_MODEL` | optional overrides (defaults: `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite-image`) |
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
+Set the same variables in the Vercel project's **Preview** and **Production** environments. Never commit `.env.local` or the secret key.
 
-Use the same variables in the existing Vercel project's **Preview** and **Production** environments. OAuth client secrets belong in Supabase's Google provider settings; they are not application environment variables. Never commit `.env.local` or service-role credentials.
-
-## Supabase schema and photos
-
-Apply the migration to the existing linked project:
-
-```bash
-supabase db push
-```
-
-`supabase/migrations/20261001000000_profiles_and_avatars.sql` adds:
-
-- `profiles`, keyed to `auth.users.id`, with nullable `first_name`, `last_name`, and `avatar_path` fields.
-- An `auth.users` insertion trigger that creates one profile per new user, plus a backfill for existing users.
-- An update timestamp trigger and policies allowing each user to read and update their own profile.
-- A private `avatars` Storage bucket, with access restricted to each user's folder.
-
-Both names are required to enter the gallery and are limited to 80 characters in the form. Photos are optional JPG, PNG, or WebP files up to 3 MiB. The server checks the file's type, size, and signature. Images are uploaded to Storage; the database stores only a path. The Profile page issues a temporary signed URL to show the photo. Replacing a photo removes the previous upload after the profile update succeeds.
-
-The existing `characters` table remains the source for the seven gallery cards: `h`, `u`, `m`, `o`, `r`, `m`, `e`. Edit `name`, `image_url`, and `fact` in Supabase; `sort_order` sets the order.
+Apply migrations to the linked project with `supabase db push`.
 
 ## Google OAuth setup
 
@@ -57,10 +83,6 @@ Follow the [Supabase Google provider guide](https://supabase.com/docs/guides/aut
 | Google OAuth client's authorized redirect URI | `https://<supabase-project-ref>.supabase.co/auth/v1/callback` |
 | App's OAuth `redirectTo` and Supabase redirect allowlist | `https://<app-host>/auth/callback` |
 
-Create a **Web application** OAuth client in your own Google Cloud project, configure the consent screen with the basic OpenID, email, and profile scopes, and enable the **Google** provider in Supabase with that client's ID and secret. To accept sign-ins from everyone, publish the OAuth consent screen; if you keep it in testing mode, add the required test users.
-
-The public `/privacy` and `/terms` pages describe this educational app and its account data. Set Google’s application homepage, privacy, and terms links to a deployed origin that serves these pages, and add that origin under authorized domains. The landing page links to both pages. Review this information if the app’s purpose or data practices change.
-
 In **Supabase → Authentication → URL Configuration**, use the production app as the Site URL and add each exact callback you need:
 
 ```text
@@ -70,7 +92,9 @@ https://tristans-humor.vercel.app/auth/callback
 https://<commit-specific-vercel-host>/auth/callback
 ```
 
-Every new Vercel preview has its own origin. Add that deployment's exact callback URL before testing Google sign-in there. In the existing Vercel project's **Deployment Protection** settings, keep Vercel Authentication and password protection off for the submission deployment so it can be opened in Incognito mode. Submit the unique deployment URL tied to the assignment's commit.
+Every new Vercel preview has its own origin. Add that deployment's exact callback URL before testing Google sign-in there. In the Vercel project's **Deployment Protection** settings, keep Vercel Authentication and password protection off so the submission deployment opens in Incognito mode. Submit the unique deployment URL tied to the assignment's commit.
+
+The public `/privacy` and `/terms` pages describe what is public (captions, pictures, first name with last initial, house), what Gemini receives, and the SynthID watermark.
 
 ## Verification
 
@@ -80,16 +104,8 @@ npm run test:coverage
 npm run build
 ```
 
-The automated tests cover verified-session checks, code exchange and cancellation, redirects and hostile redirect inputs, required names, file size/type/signature boundaries, private upload paths, save failures and cleanup, sign-out, and cookie refresh.
+The unit tests cover the New York calendar (evening and daylight-saving boundaries), Owl Post rotation, prompt fencing and name scrubbing, Gemini refusal/empty/malformed responses and image byte checks, daily limits, the generation flow's ordering and cleanup, vote input and error mapping, feed parsing, the House Cup, and the existing sign-in, profile, and photo behavior.
 
-For a live check against the existing Supabase project, sign in to the Supabase CLI and run:
+`npm run test:e2e` runs the signed-out journeys in Playwright (desktop and phone) against a production build on port 3200: the public front page, reading owls without being able to vote, redirects, the cancelled-sign-in message, legal pages, and no sideways scrolling. It seeds one owl by a disposable author and deletes it afterwards. Google sign-in itself isn't automated.
 
-```bash
-npm run test:integration
-```
-
-This creates two disposable test users and a tiny photo, checks the real trigger, profile and photo ownership policies, and private downloads, then cleans up its fixtures. It obtains the service-role key from the authenticated CLI in memory. To also check the app's server routes, start the local app and run:
-
-```bash
-TEST_APP_URL=http://localhost:3000 npm run test:integration
-```
+For a live check against the Supabase project, sign in to the Supabase CLI and run `npm run test:integration` (add `TEST_APP_URL=http://localhost:3000` to also check the app's routes). It creates disposable users and cleans them up.
