@@ -1,21 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { isProfileComplete, validateProfileNames, NAME_MAX_LENGTH } from "@/lib/profile";
+import { isProfileComplete, publicName, validateProfileNames, NAME_MAX_LENGTH } from "@/lib/profile";
 
 /* Behavior inventory:
- * Completeness: both names; either missing, null, empty, or whitespace; trimmed names.
+ * Completeness: both names and a house; either name missing, null, empty, or whitespace;
+ * missing house; trimmed names.
+ * Public name: first name and last initial, trimmed, Unicode-safe.
  * Name input: Unicode/punctuation, trim, required, missing/wrong shape, max-1/max/max+1.
  * Invariant: neither a forged ID nor extra form fields can enter the update payload.
  * Choice: both names are required by the UI; database fields remain nullable.
  */
 describe("profile completion", () => {
-  it("accepts two trimmed names", () => {
-    expect(isProfileComplete({ first_name: "  Zoë ", last_name: "王 " })).toBe(true);
+  it("accepts two trimmed names and a house", () => {
+    expect(isProfileComplete({ first_name: "  Zoë ", last_name: "王 ", house: "hufflepuff" })).toBe(true);
   });
 
-  it.each([null, { first_name: null, last_name: null }, ...["", " \n\t", null].flatMap((name) => [
-    { first_name: name, last_name: "Rai" }, { first_name: "Tristan", last_name: name },
+  it.each([null, { first_name: null, last_name: null, house: null }, ...["", " \n\t", null].flatMap((name) => [
+    { first_name: name, last_name: "Rai", house: "gryffindor" as const }, { first_name: "Tristan", last_name: name, house: "gryffindor" as const },
   ])])("requires both names: %j", (profile) => {
     expect(isProfileComplete(profile)).toBe(false);
+  });
+
+  it("requires a house", () => {
+    expect(isProfileComplete({ first_name: "Tristan", last_name: "Rai", house: null })).toBe(false);
+  });
+});
+
+describe("public name", () => {
+  it.each([
+    [{ first_name: "Tristan", last_name: "Rai" }, "Tristan R."],
+    [{ first_name: "  Zoë ", last_name: "  王小明 " }, "Zoë 王."],
+    [{ first_name: "Ana", last_name: "Ñúñez" }, "Ana Ñ."],
+    [{ first_name: "Sam", last_name: "😀Smile" }, "Sam 😀."],
+  ])("shows %j as %s", (profile, expected) => {
+    expect(publicName(profile)).toBe(expected);
   });
 });
 

@@ -1,0 +1,566 @@
+/* Owl Post front page. Tokens extend the app's parchment-and-ink system:
+ * ink-soft and rule are existing greys; each writer keeps their gallery card hue (--hue);
+ * house colours (global tokens) appear only where they encode House Cup data. */
+
+.page {
+  --ink-soft: #67675d;
+  --rule: #d9d5c8;
+  --display: var(--font-montserrat), Arial, sans-serif;
+  --body: var(--font-geist-sans), Arial, sans-serif;
+  --mono: var(--font-geist-mono), ui-monospace, monospace;
+  --quote: var(--font-fell), Georgia, serif;
+  font-family: var(--body);
+}
+
+.cup [data-house="gryffindor"], .house[data-house="gryffindor"] { --house: var(--gryffindor); }
+.cup [data-house="hufflepuff"], .house[data-house="hufflepuff"] { --house: var(--hufflepuff); }
+.cup [data-house="ravenclaw"], .house[data-house="ravenclaw"] { --house: var(--ravenclaw); }
+.cup [data-house="slytherin"], .house[data-house="slytherin"] { --house: var(--slytherin); }
+
+.main {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: clamp(24px, 5vw, 64px) 28px 48px;
+}
+
+/* Hero: the day's prompt is the thesis; the House Cup sits beside it. */
+.hero {
+  align-items: start;
+  display: grid;
+  gap: clamp(32px, 6vw, 96px);
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+}
+
+.owlPost h1 {
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 5.4vw, 5.2rem);
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 1.02;
+  margin: 18px 0 22px;
+  max-width: 15ch;
+}
+
+.owlPost > p:last-child {
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 54ch;
+}
+
+.cup {
+  border-top: 1px solid var(--foreground);
+  padding-top: 16px;
+}
+
+.cup ol {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 18px 0 16px;
+  padding: 0;
+}
+
+.cup li {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 3ch;
+}
+
+.cupName {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cupBar {
+  background: var(--rule);
+  border-radius: 2px;
+  height: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cupBar::after {
+  background: var(--house);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: scaleX(var(--share));
+  transform-origin: left;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cupPoints {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.cup > p {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Composer: the word "humorme" is the cast. */
+.composer {
+  border-top: 1px solid var(--rule);
+  margin-top: clamp(40px, 7vw, 88px);
+  padding-top: clamp(24px, 4vw, 40px);
+}
+
+.picker {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.letters {
+  display: grid;
+  gap: clamp(4px, 1vw, 12px);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin: 14px 0 0;
+}
+
+.letter {
+  --tint: hsl(var(--hue) 46% 83%);
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 10vw, 8.5rem);
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: -0.075em;
+  line-height: 1;
+  padding: 0.08em 0 0.16em;
+  position: relative;
+  transition: background-color 220ms ease, transform 220ms ease;
+  user-select: none;
+}
+
+.letters[data-interactive="true"] .letter {
+  cursor: pointer;
+}
+
+.letters[data-interactive="true"] .letter:hover {
+  background: hsl(var(--hue) 46% 90%);
+}
+
+.letter[data-checked="true"] {
+  background: var(--tint);
+}
+
+.letter:has(input:focus-visible) {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
+}
+
+/* While the owl is in flight, its writer's letter rises and falls. */
+.letter[data-flying="true"] > span[aria-hidden] {
+  animation: owl-flight 1.6s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes owl-flight {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.12em); }
+}
+
+.writer {
+  align-items: center;
+  color: var(--ink-soft);
+  display: flex;
+  font-size: 0.95rem;
+  gap: 12px;
+  margin: 16px 0 0;
+  min-height: 40px;
+}
+
+.writer strong {
+  color: var(--foreground);
+}
+
+.writerPortrait {
+  background: hsl(var(--hue) 46% 83%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 40px;
+  overflow: hidden;
+  position: relative;
+  width: 40px;
+}
+
+.writerPortrait img {
+  object-fit: cover;
+}
+
+.send {
+  align-items: end;
+  border: 0;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 28px 0 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.send:disabled {
+  opacity: 0.6;
+}
+
+.twist label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+.twist label span {
+  color: var(--ink-soft);
+}
+
+.twist input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #a6a697;
+  border-radius: 0;
+  color: var(--foreground);
+  font-size: 1.1rem;
+  padding: 8px 0 12px;
+  width: 100%;
+}
+
+.twist input::placeholder {
+  color: #a0a095;
+}
+
+.sendButton {
+  align-items: center;
+  background: var(--foreground);
+  border: 0;
+  border-radius: 3px;
+  color: var(--background);
+  display: flex;
+  font-size: 1rem;
+  gap: 28px;
+  justify-content: space-between;
+  min-width: 200px;
+  padding: 16px 20px;
+  transition: background 180ms ease;
+}
+
+.sendButton:hover {
+  background: #414137;
+}
+
+.owlsLeft {
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  margin: 14px 0 0;
+}
+
+.status {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 12px 0 0;
+  max-width: 60ch;
+}
+
+.status a {
+  text-underline-offset: 4px;
+}
+
+.invite {
+  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  line-height: 1.4;
+  margin: 28px 0 0;
+}
+
+.inviteLink {
+  background: none;
+  border: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.15em;
+}
+
+/* Feed */
+.feed {
+  margin-top: clamp(56px, 8vw, 104px);
+}
+
+.feedHeader {
+  align-items: baseline;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+}
+
+.feedHeader h2 {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  margin: 0;
+}
+
+.feedHeader p {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.count {
+  color: var(--foreground);
+  font-family: var(--mono);
+}
+
+.empty {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  gap: 48px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  scroll-margin-top: 24px;
+}
+
+.card:target .photo {
+  outline: 3px solid hsl(var(--hue) 40% 45%);
+  outline-offset: 4px;
+}
+
+/* Wizarding photographs move: a slow drift on hover. */
+.photo {
+  aspect-ratio: 3 / 4;
+  background: hsl(var(--hue) 46% 83%);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.photo img {
+  object-fit: cover;
+  transition: transform 6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .photo img {
+  transform: scale(1.06) translate(-1%, -1%);
+}
+
+.quote {
+  margin: 18px 0 0;
+}
+
+.quote blockquote {
+  margin: 0;
+}
+
+.quote p {
+  font-family: var(--quote);
+  font-size: 1.32rem;
+  font-style: italic;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.quote p::before {
+  color: hsl(var(--hue) 40% 45%);
+  content: "\201C";
+  margin-right: 0.04em;
+}
+
+.quote p::after {
+  color: hsl(var(--hue) 40% 45%);
+  content: "\201D";
+}
+
+.quote figcaption {
+  font-family: var(--display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-top: 10px;
+}
+
+.quote figcaption::before {
+  content: "— ";
+}
+
+.cardFooter {
+  align-items: start;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.byline {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.house {
+  color: var(--house);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.house::before {
+  background: var(--house);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 0.5em;
+  margin: 0 0.35em 0.1em 0.2em;
+  width: 0.5em;
+}
+
+.voteArea {
+  display: grid;
+  justify-items: end;
+}
+
+.votes {
+  align-items: center;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+}
+
+.vote {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  height: 32px;
+  line-height: 1;
+  width: 32px;
+}
+
+.vote:hover {
+  border-color: var(--rule);
+}
+
+.vote[aria-pressed="true"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.score {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  min-width: 3ch;
+  text-align: center;
+}
+
+.mine {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  margin-right: 8px;
+}
+
+.votePrompt {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  max-width: 220px;
+  text-align: right;
+}
+
+.footer {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  margin: 48px auto 0;
+  max-width: 1240px;
+  padding: 0 28px 40px;
+}
+
+/* The rule sits inside the padding so it lines up with the content edge. */
+.footer nav {
+  border-top: 1px solid var(--rule);
+  display: flex;
+  gap: 20px;
+  padding-top: 24px;
+}
+
+.footer a {
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .main {
+    padding: 28px 16px 40px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .send {
+    grid-template-columns: 1fr;
+  }
+
+  .sendButton {
+    width: 100%;
+  }
+
+  .cup li {
+    grid-template-columns: 5.5rem minmax(0, 1fr) 3ch;
+  }
+
+  .footer {
+    padding: 0 16px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter,
+  .cupBar::after,
+  .photo img,
+  .sendButton {
+    transition: none;
+  }
+
+  .letter[data-flying="true"] > span[aria-hidden] {
+    animation: none;
+  }
+
+  .card:hover .photo img {
+    transform: none;
+  }
+}

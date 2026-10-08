@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { parseHouse, type House } from "@/lib/owl-post/houses";
+
 export const NAME_MAX_LENGTH = 80;
 
 export type Profile = {
@@ -5,16 +8,40 @@ export type Profile = {
   first_name: string | null;
   last_name: string | null;
   avatar_path: string | null;
+  house: House | null;
 };
 
 export type ProfileFormState = {
   error?: string;
   success?: string;
-  fields?: { first_name?: string; last_name?: string; avatar?: string };
+  fields?: { first_name?: string; last_name?: string; avatar?: string; house?: string };
 };
 
-export function isProfileComplete(profile: Pick<Profile, "first_name" | "last_name"> | null) {
-  return Boolean(profile?.first_name?.trim() && profile?.last_name?.trim());
+const profileSchema = z.object({
+  id: z.string(),
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable(),
+  avatar_path: z.string().nullable(),
+  house: z.unknown().transform((value) => parseHouse(value)),
+});
+
+/** Parses a `profiles` row; an unrecognized house reads as "not chosen yet". */
+export function parseProfile(row: unknown): Profile | null {
+  const parsed = profileSchema.safeParse(row);
+  return parsed.success ? parsed.data : null;
+}
+
+type CompletionFields = Pick<Profile, "first_name" | "last_name" | "house">;
+export type CompleteProfile<T extends CompletionFields> = T & { first_name: string; last_name: string; house: House };
+
+export function isProfileComplete<T extends CompletionFields>(profile: T | null): profile is CompleteProfile<T> {
+  return Boolean(profile?.first_name?.trim() && profile?.last_name?.trim() && profile?.house);
+}
+
+/** The byline shown on public posts: "Tristan R." Code points keep emoji and CJK initials whole. */
+export function publicName(profile: { first_name: string; last_name: string }) {
+  const initial = Array.from(profile.last_name.trim())[0];
+  return `${profile.first_name.trim()} ${initial}.`;
 }
 
 export function validateProfileNames(formData: FormData) {

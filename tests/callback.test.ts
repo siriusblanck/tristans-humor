@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /* Behavior inventory:
- * Valid exchange -> gallery for complete names, profile for missing/blank names.
+ * Valid exchange -> front page for complete profiles, profile for missing/blank names or house.
  * Denial/provider error, absent/empty code, invalid exchange, userless response,
  * thrown network error, and database failure -> retryable landing screen.
  * Invariants: never exchange when provider denies; never follow supplied next/host headers;
@@ -15,7 +15,7 @@ import { GET } from "@/app/auth/callback/route";
 beforeEach(() => {
   mocks.createClient.mockResolvedValue({ auth: { exchangeCodeForSession: mocks.exchange } });
   mocks.exchange.mockResolvedValue({ data: { user: { id: "verified-id" } }, error: null });
-  mocks.getProfile.mockResolvedValue({ first_name: "Tristan", last_name: "Rai" });
+  mocks.getProfile.mockResolvedValue({ first_name: "Tristan", last_name: "Rai", house: "gryffindor" });
 });
 
 describe("OAuth callback", () => {
@@ -26,14 +26,17 @@ describe("OAuth callback", () => {
     expect(response.headers.get("location")).toBe("/?auth=cancelled");
   });
 
-  it("exchanges the code and uses the verified user to choose the gallery", async () => {
+  it("exchanges the code and uses the verified user to choose the front page", async () => {
     const response = await GET(new Request("https://humour.example/auth/callback?code=valid-code"));
-    expect(response.headers.get("location")).toBe("/gallery");
+    expect(response.headers.get("location")).toBe("/");
     expect(mocks.exchange).toHaveBeenCalledWith("valid-code");
     expect(mocks.getProfile).toHaveBeenCalledWith(expect.anything(), "verified-id");
   });
 
-  it.each([null, { first_name: null, last_name: null }, { first_name: " ", last_name: "Rai" }, { first_name: "Tristan", last_name: null }])("onboards incomplete profile: %j", async (profile) => {
+  it.each([
+    null, { first_name: null, last_name: null, house: null }, { first_name: " ", last_name: "Rai", house: "gryffindor" },
+    { first_name: "Tristan", last_name: null, house: "gryffindor" }, { first_name: "Tristan", last_name: "Rai", house: null },
+  ])("onboards incomplete profile: %j", async (profile) => {
     mocks.getProfile.mockResolvedValue(profile);
     const response = await GET(new Request("https://humour.example/auth/callback?code=valid"));
     expect(response.headers.get("location")).toBe("/profile");
@@ -65,6 +68,6 @@ describe("OAuth callback", () => {
 
   it("ignores hostile redirect parameters and forwarded hosts", async () => {
     const response = await GET(new Request("https://humour.example/auth/callback?code=valid&next=https://evil.example&id=victim", { headers: { "x-forwarded-host": "evil.example" } }));
-    expect(response.headers.get("location")).toBe("/gallery");
+    expect(response.headers.get("location")).toBe("/");
   });
 });

@@ -1,0 +1,289 @@
+.page {
+  position: relative;
+}
+
+.main {
+  align-items: start;
+  display: grid;
+  gap: clamp(48px, 9vw, 140px);
+  grid-template-columns: 1fr 1fr;
+  margin: 0 auto;
+  max-width: 1160px;
+  padding: clamp(56px, 9vh, 112px) 40px 72px;
+}
+
+.heading h1 {
+  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-size: clamp(3.5rem, 6.8vw, 6.2rem);
+  font-weight: 700;
+  letter-spacing: -0.075em;
+  line-height: 1;
+  margin: 28px 0;
+}
+
+.heading h1 span {
+  color: #8b8b75;
+}
+
+.heading > p:last-child {
+  color: #67675d;
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 320px;
+}
+
+.form {
+  padding-top: 12px;
+}
+
+.form fieldset {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.form > fieldset:disabled {
+  opacity: 0.65;
+}
+
+.photoField {
+  align-items: center;
+  display: flex;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.photo {
+  align-items: center;
+  background: #deddd2;
+  border-radius: 50%;
+  display: flex;
+  flex-shrink: 0;
+  height: 112px;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 112px;
+}
+
+.photo img {
+  object-fit: cover;
+}
+
+.photo > span {
+  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.photoCopy {
+  position: relative;
+}
+
+.photoUpload {
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photoInput {
+  height: 1px;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 1px;
+}
+
+.photoCopy:focus-within .photoUpload {
+  outline: 2px solid var(--foreground);
+  outline-offset: 6px;
+}
+
+.photoCopy p {
+  color: #727267;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+
+.photoCopy p:global(.field-error) {
+  color: #9b3425;
+}
+
+.names {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+}
+
+.field input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #a6a697;
+  border-radius: 0;
+  color: var(--foreground);
+  font-size: 1.1rem;
+  padding: 8px 0 14px;
+  width: 100%;
+}
+
+.field input::placeholder {
+  color: #a0a095;
+}
+
+.field input[aria-invalid="true"] {
+  border-color: #9b3425;
+}
+
+/* House picker: four sorting cards, each edged in its house colour. */
+/* Outranks `.form fieldset`, which resets margins. */
+.form .houses {
+  margin-top: 40px;
+}
+
+.houses legend {
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.houses > p {
+  color: #727267;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.houseOptions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.houseOption[data-house="gryffindor"] { --house: var(--gryffindor); }
+.houseOption[data-house="hufflepuff"] { --house: var(--hufflepuff); }
+.houseOption[data-house="ravenclaw"] { --house: var(--ravenclaw); }
+.houseOption[data-house="slytherin"] { --house: var(--slytherin); }
+
+.houseOption {
+  border: 1px solid #cfcbbd;
+  border-left: 4px solid var(--house);
+  border-radius: 3px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  position: relative;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.houseOption input {
+  opacity: 0;
+  position: absolute;
+}
+
+.houseOption:hover {
+  background: #ebe8df;
+}
+
+.houseOption:has(input:checked) {
+  background: var(--house);
+  border-color: var(--house);
+  color: var(--background);
+}
+
+.houseOption:has(input:focus-visible) {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+.houseName {
+  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.houseMotto {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.email {
+  margin: 28px 0 36px;
+  overflow-wrap: anywhere;
+}
+
+.email span {
+  color: #727267;
+  font-size: 0.75rem;
+}
+
+.email p {
+  font-size: 0.9rem;
+  margin: 8px 0 0;
+}
+
+.submit {
+  align-items: center;
+  background: var(--foreground);
+  border: 0;
+  border-radius: 3px;
+  color: var(--background);
+  display: flex;
+  font-size: 1rem;
+  justify-content: space-between;
+  padding: 18px 22px;
+  transition: background 180ms ease;
+  width: 100%;
+}
+
+.submit:hover {
+  background: #414137;
+}
+
+.submit span {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 760px) {
+  .main {
+    gap: 36px;
+    grid-template-columns: 1fr;
+    max-width: 520px;
+    padding: 40px 24px 56px;
+  }
+
+  .heading h1 {
+    margin: 20px 0;
+  }
+
+  .form {
+    padding-top: 0;
+  }
+
+  .photoField {
+    margin-bottom: 32px;
+  }
+
+  .names {
+    gap: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit,
+  .houseOption {
+    transition: none;
+  }
+}

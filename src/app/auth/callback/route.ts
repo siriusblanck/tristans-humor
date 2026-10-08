@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       if (!error && data.user) {
         const profile = await getProfile(supabase, data.user.id);
         // Destinations are fixed; never accept a user-supplied `next` URL.
-        return callbackRedirect(isProfileComplete(profile) ? "/gallery" : "/profile");
+        return callbackRedirect(isProfileComplete(profile) ? "/" : "/profile");
       }
     } catch {
       // An expired code, failed exchange, or unavailable database returns to a retryable screen.

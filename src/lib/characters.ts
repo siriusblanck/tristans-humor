@@ -1,21 +1,4 @@
-export const CHARACTER_LETTERS = [..."humorme"];
-
-export type Character = {
-  id: string;
-  letter: string;
-  name: string | null;
-  image_url: string | null;
-  fact: string | null;
-  sort_order: number;
-};
-
-export const EMPTY_CHARACTER_SLOTS: Character[] = CHARACTER_LETTERS.map(
-  (letter, sort_order) => ({
-    id: `placeholder-${sort_order}`,
-    letter,
-    name: null,
-    image_url: null,
-    fact: null,
-    sort_order,
-  }),
-);
+/** Each cast member keeps the card hue they had in the original letter gallery. */
+export function characterHue(sortOrder: number) {
+  return (sortOrder * 41 + 14) % 360;
+}

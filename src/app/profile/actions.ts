@@ -5,11 +5,14 @@ import { redirect } from "next/navigation";
 import { requireAccount, getProfile } from "@/lib/auth";
 import { isProfileComplete, validateProfileNames, type ProfileFormState } from "@/lib/profile";
 import { AVATAR_BUCKET, validateAvatar } from "@/lib/avatars";
+import { parseHouse } from "@/lib/owl-post/houses";
 
 export async function saveProfile(_previousState: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
   const { supabase, user } = await requireAccount();
   const { names, fields, valid } = validateProfileNames(formData);
   if (!valid) return { error: "Check your name below.", fields };
+  const house = parseHouse(formData.get("house"));
+  if (!house) return { error: "Choose your house.", fields: { house: "Choose your house." } };
 
   const avatar = await validateAvatar(formData.get("avatar"));
   if (avatar && "error" in avatar) return { error: avatar.error, fields: { avatar: avatar.error } };
@@ -30,7 +33,7 @@ export async function saveProfile(_previousState: ProfileFormState, formData: Fo
 
   const { data, error } = await supabase
     .from("profiles")
-    .update({ ...names, ...(newAvatarPath ? { avatar_path: newAvatarPath } : {}) })
+    .update({ ...names, house, ...(newAvatarPath ? { avatar_path: newAvatarPath } : {}) })
     .eq("id", user.id)
     .select("id")
     .single();
@@ -46,7 +49,7 @@ export async function saveProfile(_previousState: ProfileFormState, formData: Fo
   }
 
   revalidatePath("/profile");
-  revalidatePath("/gallery");
-  if (onboarding) redirect("/gallery");
+  revalidatePath("/");
+  if (onboarding) redirect("/");
   return { success: "Profile saved." };
 }

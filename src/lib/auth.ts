@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/profile";
+import { parseProfile } from "@/lib/profile";
 
 export const getAccount = cache(async () => {
   const supabase = await createClient();
@@ -20,10 +20,10 @@ export async function requireAccount() {
 export async function getProfile(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, avatar_path")
+    .select("id, first_name, last_name, avatar_path, house")
     .eq("id", userId)
     .maybeSingle();
 
   if (error) throw new Error("We couldn't load your profile. Please try again.");
-  return data as Profile | null;
+  return parseProfile(data);
 }

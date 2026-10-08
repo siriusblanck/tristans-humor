@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /* Behavior inventory:
- * Require auth for every save; names validated before any writes; reject malformed photos.
- * Existing profiles save and stay; incomplete profiles save and enter gallery.
+ * Require auth for every save; names and house validated before any writes; reject malformed photos.
+ * Existing profiles save and stay; incomplete profiles save and enter the front page.
  * Upload, missing profile, DB error/empty result -> useful error and no unintended writes.
  * Invariants: verified ID only; Storage bytes + DB path only; upload precedes DB update;
  * retain old photo on failure; remove failed new upload; remove old photo after success.
@@ -16,11 +16,11 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 import { saveProfile } from "@/app/profile/actions";
 
-const existingProfile = { id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: "verified-id/old.png" };
+const existingProfile = { id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: "verified-id/old.png", house: "ravenclaw" };
 const photo = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "../../attack.png", { type: "image/png" });
 function form(avatar?: File) {
   const data = new FormData();
-  data.set("first_name", "  New "); data.set("last_name", " Name ");
+  data.set("first_name", "  New "); data.set("last_name", " Name "); data.set("house", "hufflepuff");
   data.set("id", "victim-id"); data.set("avatar_path", "victim-id/stolen.png");
   if (avatar) data.set("avatar", avatar);
   return data;
@@ -40,11 +40,11 @@ beforeEach(() => {
 describe("profile save action", () => {
   it("uses only validated names and verified identity", async () => {
     expect(await saveProfile({}, form())).toEqual({ success: "Profile saved." });
-    expect(mocks.update).toHaveBeenCalledWith({ first_name: "New", last_name: "Name" });
+    expect(mocks.update).toHaveBeenCalledWith({ first_name: "New", last_name: "Name", house: "hufflepuff" });
     expect(mocks.eq).toHaveBeenCalledWith("id", "verified-id");
     expect(mocks.upload).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/gallery");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/");
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
@@ -60,6 +60,13 @@ describe("profile save action", () => {
     expect(mocks.getProfile).not.toHaveBeenCalled(); expect(mocks.upload).not.toHaveBeenCalled();
   });
 
+  it.each([null, "", "durmstrang", "Gryffindor"])("requires one of the four houses: %j", async (house) => {
+    const data = form(photo());
+    if (house === null) data.delete("house"); else data.set("house", house);
+    expect(await saveProfile({}, data)).toEqual({ error: "Choose your house.", fields: { house: "Choose your house." } });
+    expect(mocks.getProfile).not.toHaveBeenCalled(); expect(mocks.upload).not.toHaveBeenCalled(); expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it("rejects a spoofed image before any write", async () => {
     expect(await saveProfile({}, form(new File(["<script>"], "photo.png", { type: "image/png" })))).toEqual({
       error: "That file isn't a valid JPG, PNG, or WebP photo.", fields: { avatar: "That file isn't a valid JPG, PNG, or WebP photo." },
@@ -73,9 +80,9 @@ describe("profile save action", () => {
     expect(mocks.update).not.toHaveBeenCalled(); expect(mocks.upload).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])("enters the gallery only after a new profile is complete (photo %s)", async (includePhoto) => {
-    mocks.getProfile.mockResolvedValue({ ...existingProfile, first_name: null, avatar_path: null });
-    await expect(saveProfile({}, form(includePhoto ? photo() : undefined))).rejects.toThrow("redirect:/gallery");
+  it.each([false, true])("enters the front page only after a new profile is complete (photo %s)", async (includePhoto) => {
+    mocks.getProfile.mockResolvedValue({ ...existingProfile, first_name: null, avatar_path: null, house: null });
+    await expect(saveProfile({}, form(includePhoto ? photo() : undefined))).rejects.toThrow("redirect:/");
     expect(mocks.update).toHaveBeenCalled();
     expect(mocks.remove).not.toHaveBeenCalled();
   });
@@ -87,7 +94,7 @@ describe("profile save action", () => {
     expect(newPath).toMatch(/^verified-id\/[0-9a-f-]+\.png$/);
     expect(mocks.storageFrom).toHaveBeenCalledWith("avatars");
     expect(mocks.upload).toHaveBeenCalledWith(newPath, data.get("avatar"), { contentType: "image/png", upsert: false });
-    expect(mocks.update).toHaveBeenCalledWith({ first_name: "New", last_name: "Name", avatar_path: newPath });
+    expect(mocks.update).toHaveBeenCalledWith({ first_name: "New", last_name: "Name", house: "hufflepuff", avatar_path: newPath });
     expect(mocks.upload.mock.invocationCallOrder[0]).toBeLessThan(mocks.update.mock.invocationCallOrder[0]);
     expect(mocks.remove).toHaveBeenCalledWith([existingProfile.avatar_path]);
     expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(mocks.remove.mock.invocationCallOrder[0]);

@@ -5,6 +5,8 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { saveProfile } from "./actions";
 import { NAME_MAX_LENGTH, type Profile, type ProfileFormState } from "@/lib/profile";
 import { AVATAR_ACCEPT, validateAvatarMetadata } from "@/lib/avatars";
+import { HOUSES } from "@/lib/owl-post/houses";
+import styles from "./profile.module.css";
 
 export default function ProfileForm({ profile, email, avatarUrl, onboarding }: {
   profile: Profile | null;
@@ -29,20 +31,20 @@ export default function ProfileForm({ profile, email, avatarUrl, onboarding }: {
   const avatarError = photoError ?? state.fields?.avatar;
 
   return (
-    <form className="profile-form" action={formAction}>
+    <form className={styles.form} action={formAction}>
       <fieldset disabled={pending}>
         <legend className="visually-hidden">Your profile details</legend>
-        <div className="photo-field">
-          <div className="profile-photo">
+        <div className={styles.photoField}>
+          <div className={styles.photo}>
             {displayedPhoto ? (
               <Image src={displayedPhoto} alt="Your profile photo" fill sizes="112px" unoptimized />
             ) : <span aria-label="No profile photo">{initials}</span>}
           </div>
-          <div className="photo-field-copy">
-            <label className="photo-upload" htmlFor="avatar">{displayedPhoto ? "Change photo" : "Add a photo"}</label>
+          <div className={styles.photoCopy}>
+            <label className={styles.photoUpload} htmlFor="avatar">{displayedPhoto ? "Change photo" : "Add a photo"}</label>
             <input
               ref={fileInput}
-              className="photo-input"
+              className={styles.photoInput}
               id="avatar"
               name="avatar"
               type="file"
@@ -63,9 +65,9 @@ export default function ProfileForm({ profile, email, avatarUrl, onboarding }: {
           </div>
         </div>
 
-        <div className="name-fields">
+        <div className={styles.names}>
           {(["first_name", "last_name"] as const).map((field) => (
-            <div className="form-field" key={field}>
+            <div className={styles.field} key={field}>
               <label htmlFor={field}>{field === "first_name" ? "First name" : "Last name"}</label>
               <input
                 id={field}
@@ -83,8 +85,24 @@ export default function ProfileForm({ profile, email, avatarUrl, onboarding }: {
             </div>
           ))}
         </div>
-        <div className="profile-email"><span>Signed in with Google</span><p>{email}</p></div>
-        <button className="profile-submit" type="submit">
+
+        <fieldset className={styles.houses} aria-describedby="house-help">
+          <legend>Your house</legend>
+          <p id="house-help">Points on your owls count for your house in the weekly House Cup. Your house and first name with last initial appear on owls you send.</p>
+          <div className={styles.houseOptions}>
+            {HOUSES.map((house) => (
+              <label key={house.id} className={styles.houseOption} data-house={house.id}>
+                <input type="radio" name="house" value={house.id} defaultChecked={profile?.house === house.id} required />
+                <span className={styles.houseName}>{house.name}</span>
+                <span className={styles.houseMotto}>{house.motto}</span>
+              </label>
+            ))}
+          </div>
+          {state.fields?.house && <p className="field-error" role="alert">{state.fields.house}</p>}
+        </fieldset>
+
+        <div className={styles.email}><span>Signed in with Google</span><p>{email}</p></div>
+        <button className={styles.submit} type="submit">
           {pending ? "Saving..." : onboarding ? "Let's go" : "Save changes"}<span aria-hidden="true">↗</span>
         </button>
       </fieldset>

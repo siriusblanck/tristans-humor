@@ -12,7 +12,7 @@ import { getAccount, requireAccount, getProfile } from "@/lib/auth";
 beforeEach(() => {
   const query = { select: mocks.select, eq: mocks.eq, maybeSingle: mocks.maybeSingle };
   mocks.from.mockReturnValue(query); mocks.select.mockReturnValue(query); mocks.eq.mockReturnValue(query);
-  mocks.maybeSingle.mockResolvedValue({ data: { id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: null }, error: null });
+  mocks.maybeSingle.mockResolvedValue({ data: { id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: null, house: "hufflepuff" }, error: null });
   mocks.getUser.mockResolvedValue({ data: { user: { id: "verified-id" } }, error: null });
   mocks.createClient.mockResolvedValue({ from: mocks.from, auth: { getUser: mocks.getUser } });
   mocks.redirect.mockImplementation((path: string) => { throw new Error(`redirect:${path}`); });
@@ -34,10 +34,20 @@ describe("server authentication", () => {
 
   it("selects only the current user's profile fields", async () => {
     const client = await mocks.createClient();
-    expect(await getProfile(client, "verified-id")).toEqual({ id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: null });
+    expect(await getProfile(client, "verified-id")).toEqual({ id: "verified-id", first_name: "Tristan", last_name: "Rai", avatar_path: null, house: "hufflepuff" });
     expect(mocks.from).toHaveBeenCalledWith("profiles");
     expect(mocks.eq).toHaveBeenCalledWith("id", "verified-id");
-    expect(mocks.select).toHaveBeenCalledWith("id, first_name, last_name, avatar_path");
+    expect(mocks.select).toHaveBeenCalledWith("id, first_name, last_name, avatar_path, house");
+  });
+
+  it("reads an unrecognized house as not chosen", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { id: "verified-id", first_name: "T", last_name: "R", avatar_path: null, house: "durmstrang" }, error: null });
+    expect(await getProfile(await mocks.createClient(), "verified-id")).toMatchObject({ house: null });
+  });
+
+  it("rejects a malformed profile row instead of trusting it", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { id: 42, first_name: ["T"] }, error: null });
+    expect(await getProfile(await mocks.createClient(), "verified-id")).toBeNull();
   });
 
   it("represents a missing profile without a fabricated complete profile", async () => {
