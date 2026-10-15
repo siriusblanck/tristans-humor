@@ -5,6 +5,8 @@ export type OwlPost = {
   sort_order: number;
   headline: string;
   scene: string;
+  /** A Monday selects this topic for that New York week; otherwise it is evergreen. */
+  week_start?: string | null;
 };
 
 // The prompt became weekly in the week of Monday 2026-10-05. That week keeps the prompt that
@@ -18,10 +20,12 @@ export function weeksSinceRotationStart(date: IsoDate) {
   return Math.floor((dayNumber(weekStart(date)) - dayNumber(ROTATION_START)) / 7);
 }
 
-/** Everyone sees the same prompt for a New York week; the pool repeats once exhausted. */
+/** A dated editorial choice wins; otherwise use the unchanged evergreen rotation. */
 export function pickOwlPost(posts: readonly OwlPost[], date: IsoDate): OwlPost | null {
-  if (posts.length === 0) return null;
-  const ordered = [...posts].sort((a, b) => a.sort_order - b.sort_order);
+  const selected = posts.find((post) => post.week_start === weekStart(date));
+  if (selected) return selected;
+  const ordered = posts.filter((post) => post.week_start == null).sort((a, b) => a.sort_order - b.sort_order);
+  if (ordered.length === 0) return null;
   const index = (ROTATION_START_INDEX + weeksSinceRotationStart(date)) % ordered.length;
   return ordered[(index + ordered.length) % ordered.length];
 }

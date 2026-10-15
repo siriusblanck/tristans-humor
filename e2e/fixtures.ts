@@ -21,7 +21,7 @@ export async function seedOwl(newYorkDate: string): Promise<OwlFixture> {
   // Look everything up before creating the author, so a failed lookup leaves nothing behind.
   const [characters, posts] = await Promise.all([
     client.from("characters").select("id").order("sort_order").limit(1).single(),
-    client.from("owl_posts").select("id, sort_order, headline, scene"),
+    client.from("owl_posts").select("id, sort_order, headline, scene, week_start"),
   ]);
   if (characters.error || posts.error) {
     throw new Error(`Fixture lookups failed: ${characters.error?.message ?? posts.error?.message}`);

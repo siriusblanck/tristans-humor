@@ -17,7 +17,7 @@ const castSchema = z.array(z.object({
   id: z.string(), letter: z.string(), name: z.string().nullable(), image_url: z.string().nullable(),
   appearance: z.string().nullable(), sort_order: z.number(), is_active: z.boolean(),
 }));
-const owlPostsSchema = z.array(z.object({ id: z.string(), sort_order: z.number(), headline: z.string(), scene: z.string() }));
+const owlPostsSchema = z.array(z.object({ id: z.string(), sort_order: z.number(), headline: z.string(), scene: z.string(), week_start: z.string().nullable() }));
 const housePointsSchema = z.array(z.object({ house: z.unknown(), owl_post_date: z.unknown(), points: z.number() }));
 
 export type CastMemberRow = z.infer<typeof castSchema>[number];
@@ -51,7 +51,7 @@ const loadCast = async (supabase: SupabaseClient) =>
   unwrap(await supabase.from("characters").select("id, letter, name, image_url, appearance, sort_order, is_active").order("sort_order"), castSchema, "characters");
 
 const loadOwlPosts = async (supabase: SupabaseClient) =>
-  unwrap(await supabase.from("owl_posts").select("id, sort_order, headline, scene"), owlPostsSchema, "owl_posts");
+  unwrap(await supabase.from("owl_posts").select("id, sort_order, headline, scene, week_start"), owlPostsSchema, "owl_posts");
 
 async function countGenerations(supabase: SupabaseClient, date: IsoDate, authorId?: string) {
   let query = supabase.from("generations").select("id", { count: "exact", head: true }).eq("owl_post_date", date);

@@ -10,6 +10,12 @@ import { HOUSES, houseName, houseRail, parseHouse, weeklyHouseCup } from "@/lib/
  * The weekly prompt holds Monday through Sunday, rotates by week in sort order, keeps the
  * halal cart for the week of Oct 5 2026 (when the rotation began), works before that week,
  * wraps, ignores input order, and never mutates input.
+ * A dated topic overrides the rotation for its entire Monday–Sunday week, including
+ * New York's Sunday-night boundary. Dated topics never enter or shift the evergreen
+ * rotation; null and omitted week_start values both remain evergreen. A dated-only
+ * pool returns the matching topic or null. Frozen, unsorted inputs remain untouched.
+ * Calendar inputs are validated by parseIsoDate; duplicate dated weeks are rejected by
+ * the database's unique constraint rather than resolved by the picker.
  * House Cup: always four houses, sums only this week, ignores unknown houses, stable ties.
  * House rail: fixed house order; the leader's glass is full, others in proportion,
  * negative or zero points show an empty glass with the real number; no leader when nobody scores.
@@ -74,6 +80,11 @@ describe("Owl Post of the week", () => {
   const pool: OwlPost[] = Array.from({ length: 21 }, (_, sort_order) => ({
     id: `pool-${sort_order}`, sort_order, headline: `Headline ${sort_order}`, scene: `Scene ${sort_order}`,
   }));
+  const uris: OwlPost = {
+    id: "uris-week", sort_order: 21, week_start: "2026-10-12",
+    headline: "when you're tryna study but uris turnstile has other ideas",
+    scene: "A student trying to enter Uris Library gets hit by the turnstile.",
+  };
 
   it("keeps the halal cart (sort order 7) for the week the rotation began", () => {
     for (const day of ["2026-10-05", "2026-10-08", "2026-10-11"]) {
@@ -94,6 +105,56 @@ describe("Owl Post of the week", () => {
     expect(pickOwlPost(pool, addDays(date("2026-10-05"), 14 * 7))?.sort_order).toBe(0);
     const small = [0, 1, 2, 3].map((week) => pickOwlPost(posts, addDays(date("2026-10-05"), week * 7))?.sort_order);
     expect(small).toEqual([1, 2, 0, 1]);
+  });
+
+  it.each([12, 13, 14, 15, 16, 17, 18])("shows the dated Uris topic on October %i", (day) => {
+    expect(pickOwlPost([...pool, uris], date(`2026-10-${day}`))).toEqual(uris);
+  });
+
+  it("keeps the dated topic through Sunday night in New York, then resumes the rotation", () => {
+    const mixed = [...pool, uris];
+    expect(pickOwlPost(mixed, newYorkDate(new Date("2026-10-19T03:59:59Z"))))
+      .toEqual(uris);
+    expect(pickOwlPost(mixed, newYorkDate(new Date("2026-10-19T04:00:00Z"))))
+      .toEqual(pool[9]);
+  });
+
+  it("never shifts the evergreen rotation with a dated topic, including before and after wraps", () => {
+    const mixed = [...pool, uris];
+    for (const week of [-20, -2, -1, 0, 2, 14, 15, 50]) {
+      const day = addDays(date("2026-10-05"), week * 7);
+      expect(pickOwlPost(mixed, day)).toEqual(pickOwlPost(pool, day));
+    }
+    expect(pickOwlPost(mixed, date("2026-10-11"))).toEqual(pool[7]);
+    expect(pickOwlPost(mixed, date("2026-10-19"))).toEqual(pool[9]);
+  });
+
+  it("treats null and omitted week_start fields as the same evergreen pool", () => {
+    const withNulls = posts.map((post, index) => index === 0 ? { ...post, week_start: null } : post);
+    for (const week of [-3, 0, 1, 2, 3, 20]) {
+      const day = addDays(date("2026-10-05"), week * 7);
+      expect(pickOwlPost(withNulls, day)?.id).toBe(pickOwlPost(posts, day)?.id);
+    }
+    expect(pickOwlPost([...withNulls, uris], date("2026-10-12"))).toEqual(uris);
+  });
+
+  it("matches a dated-only pool by week and returns null outside its scheduled weeks", () => {
+    const previous = { ...uris, id: "previous-week", week_start: "2026-10-05", sort_order: 22 };
+    const following = { ...uris, id: "following-week", week_start: "2026-10-19", sort_order: 23 };
+    const datedOnly = [following, uris, previous];
+    expect(pickOwlPost(datedOnly, date("2026-10-11"))).toEqual(previous);
+    expect(pickOwlPost(datedOnly, date("2026-10-15"))).toEqual(uris);
+    expect(pickOwlPost(datedOnly, date("2026-10-19"))).toEqual(following);
+    expect(pickOwlPost(datedOnly, date("2026-10-04"))).toBeNull();
+    expect(pickOwlPost(datedOnly, date("2026-10-26"))).toBeNull();
+  });
+
+  it("does not reorder or edit frozen, unsorted inputs when selecting either kind of topic", () => {
+    const mixed = Object.freeze([posts[0], uris, posts[2], posts[1]].map((post) => Object.freeze({ ...post })));
+    const snapshot = structuredClone(mixed);
+    expect(pickOwlPost(mixed, date("2026-10-15"))).toEqual(uris);
+    expect(pickOwlPost(mixed, date("2026-10-19"))?.id).toBe("post-0");
+    expect(mixed).toEqual(snapshot);
   });
 
   it("leaves the input untouched and returns null when there are no prompts", () => {
