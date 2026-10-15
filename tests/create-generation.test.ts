@@ -7,15 +7,17 @@ import { USER_DAILY_LIMIT, GLOBAL_DAILY_LIMIT } from "@/lib/owl-post/limits";
  * in that order; the row records both prompts, both models, the byline, house, and twist.
  * Quota: a slot is claimed atomically before any Gemini call and released exactly once
  * on every later path (success or failure); a refused claim never reaches Gemini.
- * Stops before Gemini: unknown/undrawable character, no Owl Post, either quota exhausted,
+ * Stops before Gemini: unknown/undrawable/retired character, no Owl Post, either quota exhausted,
  * context load or claim failure. Stops before storage: caption or image refused, empty, malformed,
  * or thrown (rate limit/network). Storage failure -> no row. Row failure -> upload removed.
  * Invariants: image prompt never names the cast; failures are logged with context and
  * surface friendly messages; the author's identity comes from the verified session only.
+ * The original twist and caption reach the image even if omitted from generated scene;
+ * over200character captions never trigger image spending and release their reservation.
  */
 const AUTHOR = { id: "author-id", first_name: "Tristan", last_name: "Rai", house: "ravenclaw" as const };
-const HAGRID = { id: "11111111-1111-4111-8111-111111111111", name: "Hagrid", appearance: "a towering groundskeeper" };
-const ERROL = { id: "22222222-2222-4222-8222-222222222222", name: "Errol", appearance: null };
+const HAGRID = { id: "11111111-1111-4111-8111-111111111111", name: "Hagrid", appearance: "a towering groundskeeper", is_active: true };
+const ERROL = { id: "22222222-2222-4222-8222-222222222222", name: "Errol", appearance: null, is_active: false };
 const POST = { id: "post-0", sort_order: 0, headline: "The 1 train skips 116th", scene: "A train roars past." };
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 const captionJson = JSON.stringify({ caption: "Blimey, it didn't even slow down!", scene: "Hagrid waves a lantern at a speeding train." });
@@ -87,6 +89,24 @@ describe("creating a generation", () => {
     await run(HAGRID.id, null);
     expect(deps.generateCaption.mock.calls[0][0].user).not.toContain("<twist>");
     expect(deps.insertGeneration.mock.calls[0][0].user_twist).toBeNull();
+    expect(deps.generateImage.mock.calls[0][0]).not.toContain("<twist>");
+  });
+
+  it("passes the original twist and caption through to the image and saved record", async () => {
+    const twist = "My roommate's pizza got through the Uris gate, but my roommate didn't.";
+    await run(HAGRID.id, twist);
+    expect(deps.generateImage.mock.calls[0][0]).toContain(`<twist>${twist}</twist>`);
+    expect(deps.generateImage.mock.calls[0][0]).toContain("<caption>Blimey, it didn't even slow down!</caption>");
+    expect(deps.insertGeneration.mock.calls[0][0].user_twist).toBe(twist);
+    expect(deps.insertGeneration.mock.calls[0][0].image_prompt).toBe(deps.generateImage.mock.calls[0][0]);
+  });
+
+  it("rejects a caption over200characters before spending on an image", async () => {
+    deps.generateCaption.mockResolvedValue({ text: JSON.stringify({ caption: "x".repeat(201), scene: "A gate." }), candidates: [{ finishReason: "STOP" }] });
+    expect(await run()).toEqual({ ok: false, error: "The ink smudged on that one. Give it another go." });
+    expect(deps.generateImage).not.toHaveBeenCalled();
+    expect(deps.insertGeneration).not.toHaveBeenCalled();
+    expect(deps.releaseSlot).toHaveBeenCalledExactlyOnceWith("claim-1");
   });
 
   it.each([
@@ -96,6 +116,14 @@ describe("creating a generation", () => {
     expect(await action()).toEqual({ ok: false, error });
     expect(deps.claimSlot).not.toHaveBeenCalled();
     expect(deps.generateCaption).not.toHaveBeenCalled();
+  });
+
+  it("rejects a retired character even when its name and appearance are complete", async () => {
+    deps.loadContext.mockResolvedValue({ cast: [{ ...ERROL, appearance: "an ancient grey owl" }], owlPosts: [POST] });
+    expect(await run(ERROL.id)).toEqual({ ok: false, error: "Choose who's writing today." });
+    expect(deps.claimSlot).not.toHaveBeenCalled();
+    expect(deps.generateCaption).not.toHaveBeenCalled();
+    expect(deps.generateImage).not.toHaveBeenCalled();
   });
 
   it("stops when there is no Owl Post", async () => {

@@ -1,0 +1,41 @@
+{
+  "observedOn": "2026-10-15",
+  "sourceNote": "Manual observations of the user's Columbia Sidechat feed. Full post text and post URLs were not saved. Scores and ages are from that viewing, not a live ranking. Proposed headlines are paraphrases unless explicitly attributed to the user. These are evaluation candidates, not the published weekly selection.",
+  "topics": [
+    {
+      "id": "uris-turnstile",
+      "source": { "feed": "Top · 1w", "score": 712, "age": "3d", "observation": "A joke about getting hit by the Uris Library turnstile on the way to study." },
+      "headline": "when you're tryna study but uris turnstile has other ideas",
+      "wordingOrigin": "User-supplied wording, not a verbatim Sidechat quotation.",
+      "scene": "At Columbia's Uris Library, the character is heading in to study when the metal turnstile arm swings into their hip. The complaint is the physical hit from the gate, not an ID rejection or a locked entrance. Keep Uris and that physical mishap central unless the reader's twist changes its outcome."
+    },
+    {
+      "id": "back-to-back-midterms",
+      "source": { "feed": "Top · 1w", "score": 961, "age": "2d", "observation": "A meme about back-to-back midterms." },
+      "headline": "when you survive one midterm and the next one's already on your neck",
+      "wordingOrigin": "Close paraphrase of the observed situation; new wording.",
+      "scene": "A Columbia student has just finished one midterm and immediately has another midterm to face. The joke is the lack of any break between exams. Do not substitute a practice test or invent a specific course, exam date, or grade."
+    },
+    {
+      "id": "practice-test",
+      "source": { "feed": "Hot", "score": 502, "age": "13h", "observation": "Studied harder than ever for the past week, then got nothing right on the practice test." },
+      "headline": "studied harder than ever all week just to get every practice question wrong",
+      "wordingOrigin": "Close paraphrase of the observed complaint; new wording.",
+      "scene": "At Columbia, the character has studied harder than ever for a whole week, then checks a practice test and discovers every answer is wrong. Preserve all three facts: the week of effort, the practice test, and getting nothing right. This is a practice test, not a final exam or a confirmed course grade."
+    },
+    {
+      "id": "opportunities-rejections",
+      "source": { "feed": "Top · 1w", "score": "about 1.3K", "age": "1w", "observation": "Attending a prestigious school for its opportunities, then getting rejected by all of them." },
+      "headline": "came to columbia for the opportunities. got rejected by all of them",
+      "wordingOrigin": "Close paraphrase of the observed complaint; new wording.",
+      "scene": "A student at Columbia came for the opportunities and has been rejected by every opportunity they applied for. Preserve the expectation-versus-rejection joke. The source does not establish any particular club, employer, program, or real admissions decision."
+    },
+    {
+      "id": "graduation-photos",
+      "source": { "feed": "Hot", "score": 438, "age": "18h", "observation": "Wondering why graduation photos are happening on campus almost every day." },
+      "headline": "why are there graduation photos on campus literally every day",
+      "wordingOrigin": "Close paraphrase of the observed question; new wording.",
+      "scene": "On Columbia's campus, the character notices another graduation photo shoot and wonders why these shoots seem to happen almost every day. Preserve the repeated photo shoots. No claim about an actual graduation date or the photographers' identities."
+    }
+  ]
+}

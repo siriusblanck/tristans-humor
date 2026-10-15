@@ -1,5 +1,6 @@
 import { IMAGE_EXTENSIONS, type ImageMime } from "@/lib/image-signature";
 import { publicName } from "@/lib/profile";
+import { isAvailableWriter } from "@/lib/characters";
 import { newYorkDate, type IsoDate } from "./dates";
 import { failureMessage, readCaption, readImage, type Caption, type GeminiResponseLike } from "./gemini-response";
 import type { House } from "./houses";
@@ -11,7 +12,7 @@ import { buildCaptionPrompt, buildImagePrompt, protectedNamesFor, type CaptionPr
 // The decisions live here; every side effect arrives through `deps`, so the
 // flow can be tested without a network, a database, or a clock.
 
-export type CastRow = { id: string; name: string | null; appearance: string | null };
+export type CastRow = { id: string; name: string | null; appearance: string | null; is_active: boolean };
 
 export type GenerationContext = { cast: CastRow[]; owlPosts: OwlPost[] };
 
@@ -75,7 +76,7 @@ async function prepare(deps: GenerationDeps, author: Author, input: GenerationIn
   }
 
   const row = context.cast.find(({ id }) => id === input.characterId);
-  if (!row?.name || !row.appearance) return fail("Choose who's writing today.");
+  if (!row || !isAvailableWriter(row)) return fail("Choose who's writing today.");
   const owlPost = pickOwlPost(context.owlPosts, date);
   if (!owlPost) return fail("Today's Owl Post hasn't arrived yet. Check back soon.");
 
@@ -105,7 +106,7 @@ async function generateMedia(deps: GenerationDeps, author: Author, prepared: Pre
     const caption = readCaption(await deps.generateCaption(captionPrompt));
     if (!caption.ok) return fail(failureMessage(caption.failure));
 
-    const imagePrompt = buildImagePrompt({ character, scene: caption.value.scene, protectedNames: protectedNamesFor(cast) });
+    const imagePrompt = buildImagePrompt({ character, caption: caption.value.caption, scene: caption.value.scene, twist, protectedNames: protectedNamesFor(cast) });
     const image = readImage(await deps.generateImage(imagePrompt));
     if (!image.ok) return fail(failureMessage(image.failure));
 

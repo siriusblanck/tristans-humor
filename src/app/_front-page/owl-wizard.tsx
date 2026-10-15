@@ -12,25 +12,10 @@ import styles from "./wizard.module.css";
 
 type Stage = "pick" | "twist" | "flight";
 
-type Deck = { spacing: number; drop: number; tilt: number };
-
-const DESKTOP_DECK: Deck = { spacing: 112, drop: 7, tilt: 7 };
-const COMPACT_CARD = { width: 96, height: 134 };
-const COMPACT_TILT = 4.5;
-
-/** The fan's spread. On phones it narrows until the outer cards, tilted, still fit the screen. */
-function deckGeometry(count: number): Deck {
-  if (isDesktop()) return DESKTOP_DECK;
-  const half = (count - 1) / 2;
-  const swing = COMPACT_CARD.height * Math.sin((half * COMPACT_TILT * Math.PI) / 180);
-  const spacing = (window.innerWidth - 24 - COMPACT_CARD.width - 2 * swing) / (count - 1);
-  return { spacing: Math.min(112, Math.max(24, spacing)), drop: 3, tilt: COMPACT_TILT };
-}
-
-/** Where each of the seven writers sits in the fan. */
-function pose(index: number, count: number, deck: Deck) {
-  const offset = index - (count - 1) / 2;
-  return { x: offset * deck.spacing, y: offset * offset * deck.drop, r: offset * deck.tilt };
+/** Centre each row independently, including a partially filled last row. */
+function column(index: number, count: number, columns: number) {
+  const start = Math.floor(index / columns) * columns;
+  return index - start - (Math.min(columns, count - start) - 1) / 2;
 }
 
 /**
@@ -50,8 +35,6 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
   const [chosen, setChosen] = useState<number | null>(null);
   const [twist, setTwist] = useState("");
   const [carried, setCarried] = useState(false);
-  // The wizard only mounts in the browser (after a click), so it can measure the window here.
-  const [deck] = useState(() => deckGeometry(writers.length));
   const root = useRef<HTMLElement>(null);
   const veil = useRef<HTMLDivElement>(null);
   const cards = useRef<Array<HTMLButtonElement | null>>([]);
@@ -60,26 +43,47 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
   const carrying = useRef<Promise<void>>(Promise.resolve());
   const handled = useRef<ComposerState>(state);
   const leaving = useRef(false);
+  const pickedFrom = useRef<string | null>(null);
+  const pickerScroll = useRef(0);
+  const entrance = useRef<Animation[]>([]);
 
   // Open: the page blurs and the cast fans up out of the send button.
   useLayoutEffect(() => {
+    let active = true;
+    const cover = veil.current;
     const scene = sceneRef.current;
     if (!isDesktop() && scene) {
       const chip = scene.querySelector('[data-reveal="chip"]');
       if (chip && root.current) root.current.style.setProperty("--wizard-top", `${chip.getBoundingClientRect().bottom + 12}px`);
     }
-    void play(veil.current, [{ opacity: 0 }, { opacity: 1 }], 380, EASE.out, { fill: "none" });
+    void play(cover, [{ opacity: 0 }, { opacity: 1 }], 380, EASE.out, { fill: "none" });
     const from = isDesktop() ? "translate(470px, 330px) rotate(28deg) scale(.3)" : "translate(0px, 520px) rotate(12deg) scale(.4)";
-    void Promise.all(cards.current.map((card, index) => {
-      if (!card) return undefined;
-      const { x, y, r } = pose(index, writers.length, deck);
-      return play(card, [{ transform: from, opacity: 0 }, { transform: `translate(${x}px, ${y}px) rotate(${r}deg)`, opacity: 1 }], 560, EASE.settle, { delay: index * 45, fill: "backwards" });
-    })).then(() => cards.current[0]?.focus({ preventScroll: true }));
+    const reduced = prefersReducedMotion();
+    const animations = cards.current.flatMap((card, index) => {
+      if (!card) return [];
+      // Use the resting layout, never a sampled in-flight matrix. Strict Mode replays
+      // this effect; sampling the first entrance made the replay hold and then snap.
+      const rowIndex = index < 6 ? index : index - 6;
+      return [card.animate([
+        { transform: from, opacity: 0 },
+        { transform: "translate(var(--x), var(--y)) rotate(var(--r)) scale(1)", opacity: 1 },
+      ], { duration: reduced ? 1 : 560, easing: EASE.settle, delay: reduced ? 0 : rowIndex * 45, fill: "backwards" })];
+    });
+    entrance.current = animations;
+    void Promise.all(animations.map((animation) => animation.finished.catch(() => undefined))).then(() => {
+      if (!active || entrance.current !== animations) return;
+      entrance.current = [];
+      if (!leaving.current) cards.current[0]?.focus({ preventScroll: true });
+    });
     document.body.style.setProperty("overflow", "hidden");
     return () => {
+      active = false;
+      animations.forEach((animation) => animation.cancel());
+      if (entrance.current === animations) entrance.current = [];
+      clearScripted(cover);
       document.body.style.removeProperty("overflow");
     };
-  }, [deck, sceneRef, writers.length]);
+  }, [sceneRef, writers.length]);
 
   async function close(after: () => void) {
     if (leaving.current) return;
@@ -93,9 +97,32 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
 
   function pick(index: number) {
     if (stage !== "pick") return;
+    const frame = root.current;
+    const card = cards.current[index];
+    pickerScroll.current = frame?.scrollTop ?? 0;
+    // Preserve the visible pose if selected during unfolding or from a scrolled row.
+    if (frame && card && (entrance.current.length > 0 || frame.scrollTop > 0)) {
+      const start = new DOMMatrix(getComputedStyle(card).transform);
+      start.m42 -= frame.scrollTop;
+      pickedFrom.current = start.toString();
+      frame.scrollTop = 0;
+    }
+    const opening = entrance.current;
+    entrance.current = [];
+    opening.forEach((animation) => animation.cancel());
     setChosen(index);
     setStage("twist");
   }
+
+  useLayoutEffect(() => {
+    if (stage !== "twist" || chosen === null || !pickedFrom.current) return;
+    const from = pickedFrom.current;
+    pickedFrom.current = null;
+    void play(cards.current[chosen], [
+      { transform: from },
+      { transform: "translate(var(--cx), var(--cy)) scale(var(--cs))" },
+    ], 540, EASE.flight, { fill: "none" });
+  }, [chosen, stage]);
 
   // The twist box slides in once the chosen card has taken the centre.
   useEffect(() => {
@@ -108,7 +135,12 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
   function pickAgain() {
     setChosen(null);
     setStage("pick");
-    requestAnimationFrame(() => cards.current[chosen ?? 0]?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => {
+      // Restore the row that held focus before the chosen card moved to the form.
+      // scrollIntoView here would measure the card midway through its return animation.
+      if (!isDesktop() && root.current) root.current.scrollTop = pickerScroll.current;
+      cards.current[chosen ?? 0]?.focus({ preventScroll: true });
+    });
   }
 
   // Sending: the owl swoops in, takes the card, and flies off with it.
@@ -171,7 +203,7 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
   return (
     <>
       <div ref={veil} className={styles.veil} aria-hidden="true" />
-      <section ref={root} className={styles.wizard} role="dialog" aria-modal="true" aria-labelledby="wizard-title" aria-busy={pending}>
+      <section ref={root} className={styles.wizard} data-stage={stage} role="dialog" aria-modal="true" aria-labelledby="wizard-title" aria-busy={pending}>
         <h2 id="wizard-title" className={styles.title} data-hidden={stage !== "pick"}>Who’s writing?</h2>
         {stage !== "flight" && (
           <button type="button" className={`${controls.iconButton} ${styles.close}`} aria-label="Close" onClick={() => void close(onClose)}>
@@ -179,9 +211,12 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
           </button>
         )}
 
-        <div role="group" aria-labelledby="wizard-title">
+        <div className={styles.cast} role="group" aria-labelledby="wizard-title" style={{ "--compact-rows": Math.ceil(writers.length / 3) } as CSSProperties}>
           {writers.map((option, index) => {
-            const { x, y, r } = pose(index, writers.length, deck);
+            // Keep the original six above the expanded cast, with exactly two fans.
+            const fanRow = index < 6 ? 0 : 1;
+            const rowCount = fanRow === 0 ? Math.min(6, writers.length) : writers.length - 6;
+            const fanColumn = index - fanRow * 6 - (rowCount - 1) / 2;
             const cardState = chosen === null ? undefined : chosen === index ? "chosen" : "gone";
             return (
               <button
@@ -195,7 +230,12 @@ export default function OwlWizard({ writers, remaining, sceneRef, onClose, onLan
                 tabIndex={stage === "pick" ? 0 : -1}
                 onClick={() => pick(index)}
                 style={{
-                  "--x": `${x}px`, "--y": `${y}px`, "--r": `${r}deg`, "--h": option.hue,
+                  "--fan-x": `${fanColumn * 112}px`,
+                  "--fan-y": `${fanRow * 234 + fanColumn * fanColumn * 5}px`,
+                  "--fan-r": `${fanColumn * 4}deg`,
+                  "--compact-column": column(index, writers.length, 3),
+                  "--compact-row": Math.floor(index / 3),
+                  "--h": option.hue,
                   "--spin": `${(index - (chosen ?? index)) * 9}deg`,
                   "--delay": `${Math.abs(index - (chosen ?? index)) * 30}ms`,
                 } as CSSProperties}

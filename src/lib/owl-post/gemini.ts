@@ -3,6 +3,7 @@ import "server-only";
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { GeminiResponseLike } from "./gemini-response";
 import type { CaptionPrompt } from "./prompts";
+import { CAPTION_MAX_LENGTH, SCENE_MAX_LENGTH } from "./content-limits";
 
 // Model ids change often; override them with env vars instead of editing code.
 const DEFAULT_TEXT_MODEL = "gemini-3.5-flash-lite";
@@ -13,7 +14,10 @@ const IMAGE_TIMEOUT_MS = 55_000;
 
 const CAPTION_SCHEMA = {
   type: "object",
-  properties: { caption: { type: "string" }, scene: { type: "string" } },
+  properties: {
+    caption: { type: "string", description: `Short, sassy campus-post wording with the selected character's attitude; at most ${CAPTION_MAX_LENGTH} characters; specific campus facts and the reader's twist drive the joke.` },
+    scene: { type: "string", description: `One drawable resulting moment matching the caption, twist participants and negations; at most ${SCENE_MAX_LENGTH} characters; describe fictional people by appearance and retain relationship nouns.` },
+  },
   required: ["caption", "scene"],
 };
 

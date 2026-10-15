@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CAPTION_MAX_LENGTH, failureMessage, readCaption, readImage } from "@/lib/owl-post/gemini-response";
+import { CAPTION_MAX_LENGTH, SCENE_MAX_LENGTH, failureMessage, readCaption, readImage } from "@/lib/owl-post/gemini-response";
 
 /* Behavior inventory:
  * Caption: valid JSON -> trimmed caption + scene; invalid JSON, missing or oversized
  * fields -> invalid; prompt blocks and safety finishes -> blocked; no text -> empty.
+ * Caption boundary199/200accepted,201rejected; scene599/600accepted,601rejected.
  * Image: first inline image part wins; only PNG/JPEG/WebP whose bytes match the claimed
  * type and fit the size limit; IMAGE_SAFETY/OTHER -> blocked; NO_IMAGE/text-only -> empty.
  * Every failure maps to a friendly message without provider codes.
@@ -17,6 +18,20 @@ describe("reading the caption", () => {
     expect(readCaption(textResponse(JSON.stringify({ caption: "  Blimey, the 1 train.  ", scene: " A giant on a platform. " })))).toEqual({
       ok: true, value: { caption: "Blimey, the 1 train.", scene: "A giant on a platform." },
     });
+  });
+
+  it.each([199, 200, 201])("enforces the caption boundary at %d characters", (length) => {
+    const result = readCaption(textResponse(JSON.stringify({ caption: "x".repeat(length), scene: "A platform." })));
+    expect(CAPTION_MAX_LENGTH).toBe(200);
+    expect(result.ok).toBe(length <= 200);
+    if (!result.ok) expect(result.failure).toBe("invalid");
+  });
+
+  it.each([599, 600, 601])("enforces the scene boundary at %d characters", (length) => {
+    const result = readCaption(textResponse(JSON.stringify({ caption: "A caption.", scene: "x".repeat(length) })));
+    expect(SCENE_MAX_LENGTH).toBe(600);
+    expect(result.ok).toBe(length <= 600);
+    if (!result.ok) expect(result.failure).toBe("invalid");
   });
 
   it.each([

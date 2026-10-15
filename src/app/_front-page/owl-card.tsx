@@ -54,7 +54,6 @@ export default function OwlCard({ owl, depth, priority, drag, cardRef }: {
         <Image src={owl.imageUrl} alt={owl.imageAlt} fill sizes="(min-width: 1024px) 440px, 45vw" priority={priority} draggable={false} />
       </div>
       <div className={styles.letter}>
-        <span className={styles.quote} aria-hidden="true">“</span>
         <div className={styles.post}>
           <span className={styles.stampWrap}>
             <span className={styles.stamp}>

@@ -51,6 +51,12 @@ describe("feed items", () => {
     expect(item).toMatchObject({ isMine: true, myVote: 0 });
   });
 
+  it("keeps a retired writer's attribution on existing posts", () => {
+    const retired = { ...cast[0], name: "Errol", is_active: false };
+    const [item] = toFeedItems(parseGenerationRows([row()]), { cast: [retired], viewerId: null, votes: new Map(), imageUrl });
+    expect(item.character?.name).toBe("Errol");
+  });
+
   it("never marks anonymous rows as mine and tolerates a missing character", () => {
     const [item] = toFeedItems(parseGenerationRows([row({ character_id: "gone" })]), { cast, viewerId: null, votes: new Map(), imageUrl });
     expect(item).toMatchObject({ isMine: false, myVote: 0, character: null, imageAlt: "An AI illustration for this caption." });

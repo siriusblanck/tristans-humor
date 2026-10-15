@@ -13,13 +13,13 @@
 .wizard {
   --cw: 128px;
   --ch: 178px;
-  --deck-top: 172px;
+  --deck-top: 110px;
   --cs: 1.5;
   --pair-gap: 28px;
   --twist-w: 410px;
   /* The chosen card (scaled by --cs) and the twist box sit side by side, centred as a pair. */
   --cx: calc(var(--cw) * var(--cs) / 2 - (var(--cw) * var(--cs) + var(--pair-gap) + var(--twist-w)) / 2);
-  --cy: 0px;
+  --cy: 62px;
   bottom: 0;
   left: 0;
   position: fixed;
@@ -50,6 +50,9 @@
 }
 
 .writer {
+  --x: var(--fan-x);
+  --y: var(--fan-y);
+  --r: var(--fan-r);
   --lift: 0px;
   background: linear-gradient(160deg, #ddbb6e, #9c7a3c);
   border: 0;
@@ -124,7 +127,7 @@
   left: calc(50% + var(--cx) + var(--cw) * var(--cs) / 2 + var(--pair-gap));
   padding: 24px;
   position: absolute;
-  top: calc(var(--deck-top) + var(--ch) * (1 - var(--cs)));
+  top: calc(var(--deck-top) + var(--cy) + var(--ch) * (1 - var(--cs)));
   width: var(--twist-w);
 }
 
@@ -238,14 +241,34 @@
 
 @media not ((min-width: 1024px) and (min-height: 600px)) {
   .wizard {
-    --cw: 96px;
-    --ch: 134px;
-    --deck-top: 96px;
+    --cw: min(96px, calc((100vw - 48px) / 3));
+    --ch: calc(var(--cw) * 134 / 96);
+    --deck-top: 72px;
     --cx: 0px;
-    --cy: -88px;
+    --cy: -64px;
     --cs: 1;
     top: var(--wizard-top, 140px);
   }
+
+  .wizard[data-stage="pick"] {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .wizard[data-stage="pick"] .cast {
+    min-height: calc(var(--deck-top) + var(--compact-rows) * (var(--ch) + 18px) + 12px);
+  }
+
+  .writer {
+    --x: calc(var(--compact-column) * (var(--cw) + 12px));
+    --y: calc(var(--compact-row) * (var(--ch) + 18px));
+    --r: 0deg;
+  }
+
+  .writer:hover,
+  .writer:focus-visible { --lift: 5px; }
 
   .title {
     font-size: 28px;

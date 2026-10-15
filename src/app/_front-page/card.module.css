@@ -68,16 +68,6 @@
   position: absolute;
 }
 
-.quote {
-  color: var(--gd);
-  font: 104px/1 var(--f-voice);
-  left: 6px;
-  opacity: 0.32;
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-}
-
 .post { position: relative; }
 
 .stampWrap {
@@ -202,7 +192,6 @@
   }
 
   .letter { padding: 12px 12px 12px 6px; }
-  .quote { font-size: 68px; left: 2px; }
   .postmark { right: 20px; top: 3px; }
   .stamp { padding: 4px; }
   .caption { font-size: 14.5px; line-height: 1.28; }

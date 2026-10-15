@@ -15,7 +15,7 @@ const WEEK_LIMIT = 120;
 
 const castSchema = z.array(z.object({
   id: z.string(), letter: z.string(), name: z.string().nullable(), image_url: z.string().nullable(),
-  appearance: z.string().nullable(), sort_order: z.number(),
+  appearance: z.string().nullable(), sort_order: z.number(), is_active: z.boolean(),
 }));
 const owlPostsSchema = z.array(z.object({ id: z.string(), sort_order: z.number(), headline: z.string(), scene: z.string() }));
 const housePointsSchema = z.array(z.object({ house: z.unknown(), owl_post_date: z.unknown(), points: z.number() }));
@@ -48,7 +48,7 @@ function count(result: Result, label: string) {
 }
 
 const loadCast = async (supabase: SupabaseClient) =>
-  unwrap(await supabase.from("characters").select("id, letter, name, image_url, appearance, sort_order").order("sort_order"), castSchema, "characters");
+  unwrap(await supabase.from("characters").select("id, letter, name, image_url, appearance, sort_order, is_active").order("sort_order"), castSchema, "characters");
 
 const loadOwlPosts = async (supabase: SupabaseClient) =>
   unwrap(await supabase.from("owl_posts").select("id, sort_order, headline, scene"), owlPostsSchema, "owl_posts");

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { isImageMime, matchesImageSignature, type ImageMime } from "@/lib/image-signature";
+import { CAPTION_MAX_LENGTH, SCENE_MAX_LENGTH } from "./content-limits";
+export { CAPTION_MAX_LENGTH, SCENE_MAX_LENGTH } from "./content-limits";
 
 // Gemini responses are external data: parse them here and pass only typed values inward.
 // The shapes below are the subset of @google/genai's GenerateContentResponse we read.
@@ -14,8 +16,6 @@ export type GeminiResponseLike = {
 export type GenerationFailure = "blocked" | "empty" | "invalid" | "unavailable";
 type Read<T> = ({ ok: true } & T) | { ok: false; failure: GenerationFailure };
 
-export const CAPTION_MAX_LENGTH = 280;
-export const SCENE_MAX_LENGTH = 600;
 /** Matches the `generations` Storage bucket's file size limit. */
 export const GENERATION_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 

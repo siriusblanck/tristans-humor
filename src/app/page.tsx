@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { signedPhoto } from "@/lib/avatar-urls";
 import { getAccount, getProfile } from "@/lib/auth";
-import { characterHue } from "@/lib/characters";
+import { characterHue, isAvailableWriter } from "@/lib/characters";
 import { formatPostmark, formatWeekRange } from "@/lib/owl-post/dates";
 import { houseRail } from "@/lib/owl-post/houses";
 import { remainingToday } from "@/lib/owl-post/limits";
@@ -62,8 +62,8 @@ export default async function FrontPage({ searchParams }: PageProps<"/">) {
       isMine: item.isMine,
       postmark: formatPostmark(item.owlPostDate),
     })),
-    writers: page.cast.flatMap(({ id, name, image_url, sort_order }) =>
-      name ? [{ id, name, imageUrl: image_url, hue: characterHue(sort_order) }] : []),
+    writers: page.cast.filter(isAvailableWriter).map(({ id, name, image_url, sort_order }) =>
+      ({ id, name, imageUrl: image_url, hue: characterHue(sort_order) })),
     viewer,
     remaining: remainingToday(page.usedToday),
     authError: typeof auth === "string" ? AUTH_MESSAGES[auth] : undefined,
