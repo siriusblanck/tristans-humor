@@ -1,0 +1,14 @@
+/* Inventory: four ordered beats before returning to the owl, null mount, skip
+ * before/mid-story, pause/resume, errors always restore hidden panels, all
+ * reading waits use injected timing (including reduced-motion mode). */
+import { expect,it,vi } from "vitest";
+import { playWelcome,WELCOME_BEATS } from "@/app/_front-page/welcome-story";
+import type { Timing } from "@/app/_front-page/delivery-choreography";
+function setup(){const beats=Array.from({length:4},()=>({hidden:true}));const root={hidden:true,dataset:{} as Record<string,string>,querySelectorAll:()=>beats};const shown: number[]=[];const timing:Timing={reduce:false,animate:vi.fn(async(el)=>{shown.push(beats.indexOf(el as unknown as typeof beats[number]))}),wait:vi.fn(async()=>{})};return {beats,root:root as unknown as HTMLElement,timing,shown};}
+it("plays four complete scenes then yields to delivery",async()=>{const {root,beats,timing,shown}=setup();await playWelcome(root,timing,()=>false,()=>false);expect(shown).toEqual([0,0,1,1,2,2,3,3]);expect(vi.mocked(timing.wait).mock.calls.flat()).toEqual([...WELCOME_BEATS]);expect(root.hidden).toBe(true);expect(beats.every(b=>b.hidden)).toBe(true)});
+it("is safe without a mounted welcome",async()=>{const {timing}=setup();await playWelcome(null,timing,()=>false,()=>false);expect(timing.animate).not.toHaveBeenCalled()});
+it("skip jumps straight to delivery with nothing left visible",async()=>{const {root,beats,timing}=setup();await playWelcome(root,timing,()=>false,()=>true);expect(timing.animate).not.toHaveBeenCalled();expect(root.hidden).toBe(true);expect(beats.every(b=>b.hidden)).toBe(true)});
+it("skips the remaining beats if skip is clicked during reading",async()=>{const {root,timing}=setup();let skip=false;vi.mocked(timing.wait).mockImplementation(async()=>{skip=true});await playWelcome(root,timing,()=>false,()=>skip);expect(timing.wait).toHaveBeenCalledTimes(1);expect(root.hidden).toBe(true)});
+it("holds a paused beat until resumed",async()=>{const {root,timing}=setup();let paused=true;vi.mocked(timing.wait).mockImplementation(async ms=>{if(ms===1000)paused=false});await playWelcome(root,timing,()=>paused,()=>false);expect(vi.mocked(timing.wait).mock.calls.flat()).toEqual([2800,1000,3000,2700,1400])});
+it("cleans up after an animation failure",async()=>{const {root,beats,timing}=setup();vi.mocked(timing.animate).mockRejectedValueOnce(new Error("detached"));await expect(playWelcome(root,timing,()=>false,()=>false)).rejects.toThrow("detached");expect(root.hidden).toBe(true);expect(beats.every(b=>b.hidden)).toBe(true)});
+it("keeps reading time with reduced motion",async()=>{const {root,timing}=setup();timing.reduce=true;await playWelcome(root,timing,()=>false,()=>false);expect(vi.mocked(timing.wait).mock.calls.flat()).toEqual([...WELCOME_BEATS])});

@@ -4,6 +4,7 @@
 // pages repeat the scaling on in-app navigations, where inline scripts don't run.
 
 export const DELIVERY_KEY_PREFIX = "hw:delivered:";
+export const WELCOME_STORAGE_KEY = "hw:welcome:v1";
 const UNCLAIMED_INTRO_TIMEOUT_MS = 6000;
 
 export function deliveryKey(monday: string) {
@@ -20,7 +21,7 @@ export function bootScript(monday: string) {
     'function fit(){d.style.setProperty("--s",String(Math.min(innerWidth/1200,innerHeight/760)))}',
     'fit();addEventListener("resize",fit);',
     'if(p!=="/")return;',
-    `try{if(!localStorage.getItem(${key})){d.dataset.intro="play";`,
+    `try{if(!localStorage.getItem(${key})||!localStorage.getItem("${WELCOME_STORAGE_KEY}")){d.dataset.intro="play";`,
     // If the page never takes over the intro (a script error, say), show the page anyway.
     `setTimeout(function(){if(!window.__hwIntro)delete d.dataset.intro},${UNCLAIMED_INTRO_TIMEOUT_MS})}}catch(e){}`,
     "})();",

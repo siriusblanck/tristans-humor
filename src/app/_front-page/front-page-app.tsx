@@ -55,6 +55,7 @@ export default function FrontPageApp({ data, backdrop, sky }: { data: FrontPageD
   const [wizardOpen, setWizardOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [replay, setReplay] = useState(0);
+  const [welcomeReplay, setWelcomeReplay] = useState(0);
   const [voting, startVote] = useTransition();
   const voteInFlight = useRef(false);
 
@@ -178,6 +179,8 @@ export default function FrontPageApp({ data, backdrop, sky }: { data: FrontPageD
         </div>
 
         <nav className={styles.legal} data-reveal="legal" aria-label="About Hog Wumbia" inert={wizardOpen}>
+          <button type="button" className="text-button" onClick={() => setWelcomeReplay(count => count + 1)}>How to play</button>
+          <span aria-hidden="true">·</span>
           <Link href="/privacy">Privacy</Link>
           <span aria-hidden="true">·</span>
           <Link href="/terms">Terms</Link>
@@ -193,7 +196,7 @@ export default function FrontPageApp({ data, backdrop, sky }: { data: FrontPageD
           />
         )}
 
-        <OwlDelivery weekKey={data.weekKey} prompt={data.prompt} weekLabel={data.weekLabel} replay={replay} sceneRef={scene} />
+        <OwlDelivery weekKey={data.weekKey} prompt={data.prompt} weekLabel={data.weekLabel} replay={replay} welcomeReplay={welcomeReplay} sceneRef={scene} />
 
         <div className={styles.toastRegion} role="status">
           {toast?.tone === "status" && <span key={toast.id} className={styles.toast}>{toast.message}</span>}

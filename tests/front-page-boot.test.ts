@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bootScript, deliveryKey } from "@/app/_front-page/boot-script";
+import { bootScript, deliveryKey, WELCOME_STORAGE_KEY } from "@/app/_front-page/boot-script";
 
 /* Behavior inventory:
  * It acts on the front page, and scales the profile page's sheet too. Each week has its own "delivered" key. Before first paint the script scales the scene to
@@ -7,14 +7,14 @@ import { bootScript, deliveryKey } from "@/app/_front-page/boot-script";
  * week's letter hasn't been seen; if the page never claims the intro, the flag clears itself.
  * Blocked storage never stops the page. The script text can't close its <script> tag.
  */
-function run(monday: string, { stored, storageThrows = false, width = 1440, height = 900, path = "/" }: { stored?: string; storageThrows?: boolean; width?: number; height?: number; path?: string } = {}) {
+function run(monday: string, { stored, welcomeStored = "1", storageThrows = false, width = 1440, height = 900, path = "/" }: { stored?: string; welcomeStored?: string | null; storageThrows?: boolean; width?: number; height?: number; path?: string } = {}) {
   const root = { dataset: {} as Record<string, string>, style: { props: new Map<string, string>(), setProperty(name: string, value: string) { this.props.set(name, value); } } };
   const listeners: Record<string, () => void> = {};
   const timers: Array<() => void> = [];
   const window = {
     innerWidth: width, innerHeight: height, location: { pathname: path },
     document: { documentElement: root },
-    localStorage: { getItem: vi.fn((key: string) => { if (storageThrows) throw new Error("blocked"); return key === deliveryKey(monday) ? (stored ?? null) : null; }) },
+    localStorage: { getItem: vi.fn((key: string) => { if (storageThrows) throw new Error("blocked"); return key === WELCOME_STORAGE_KEY ? welcomeStored : key === deliveryKey(monday) ? (stored ?? null) : null; }) },
     addEventListener: (event: string, listener: () => void) => { listeners[event] = listener; },
     setTimeout: (callback: () => void) => { timers.push(callback); },
   } as Record<string, unknown>;
@@ -38,6 +38,11 @@ describe("front page boot script", () => {
   it("asks for the delivery only until this week's letter has been seen", () => {
     expect(run("2026-10-05").root.dataset.intro).toBe("play");
     expect(run("2026-10-05", { stored: "1" }).root.dataset.intro).toBeUndefined();
+  });
+
+  it("introduces the app even if this week's letter was already delivered", () => {
+    expect(run("2026-10-05", { stored: "1", welcomeStored: null }).root.dataset.intro).toBe("play");
+    expect(run("2026-10-05", { stored: "1", welcomeStored: "1" }).root.dataset.intro).toBeUndefined();
   });
 
   it("clears the flag if the page never takes over the intro", () => {
