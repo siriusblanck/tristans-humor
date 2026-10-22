@@ -1,4 +1,10 @@
-.welcome{position:absolute;inset:0;color:var(--parchment);text-align:center;background:radial-gradient(ellipse at 50% 40%,rgba(28,38,80,.65),rgba(8,12,32,.3) 75%);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.welcome{position:absolute;inset:0;color:var(--parchment);text-align:center}
+.backdrop{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(28,38,80,.65),rgba(8,12,32,.3) 75%);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+/* The desktop stage is transformed and letterboxed. Counter its scale so the blur
+   reaches the window edges while the artwork keeps its original stage coordinates. */
+@media (min-width:1024px) and (min-height:600px){
+ .backdrop{inset:auto;left:50%;top:50%;width:calc(100vw / var(--s,1));height:calc(100dvh / var(--s,1));transform:translate(-50%,-50%)}
+}
 .welcome[hidden],.beat[hidden]{display:none}
 .beat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 70px}
 .beat h2{font:400 50px/1.08 var(--f-voice);letter-spacing:-.02em;margin:24px 0 18px;text-wrap:balance}

@@ -30,6 +30,7 @@ export async function playWelcome(root: HTMLElement | null, timing: Timing, paus
 
 export default function WelcomeStory({ rootRef }: { rootRef: React.RefObject<HTMLDivElement | null> }) {
   return <div ref={rootRef} className={styles.welcome} hidden>
+    <div className={styles.backdrop} aria-hidden="true" />
     <div data-welcome-beat hidden className={styles.beat}>
       <div className={styles.cards} aria-hidden="true"><span className={styles.backCard}>Campus<br/>chaos.</span><span className={styles.frontCard}><Seal size={42}/><span>Wizard-level<br/><em>pettiness.</em></span></span></div>
       <h2>Columbia is the joke.<br/><em>You write the punchline.</em></h2>
