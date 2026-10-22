@@ -166,7 +166,6 @@ export default function OwlDelivery({ weekKey, prompt, weekLabel, replay, welcom
       </div>
       <article ref={hero} className={styles.hero} aria-hidden="true">
         <p className={styles.heroHead}>{prompt?.headline ?? "This week’s owl is still in the air."}</p>
-        {prompt && <p className={styles.heroScene}>{prompt.scene}</p>}
         <span className={styles.heroSub}>This week · {weekLabel}</span>
       </article>
       <button

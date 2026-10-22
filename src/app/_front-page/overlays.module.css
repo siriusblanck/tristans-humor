@@ -97,13 +97,6 @@
   text-wrap: balance;
 }
 
-.heroScene {
-  color: var(--ink-soft);
-  font: italic 17px/1.4 var(--f-voice);
-  margin: 0;
-  max-width: 40ch;
-}
-
 .heroSub {
   color: var(--seal-deep);
   font: 14px/1 var(--f-label);
@@ -129,7 +122,6 @@
   }
 
   .heroHead { font-size: 32px; }
-  .heroScene { font-size: 15px; }
   .skip { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); right: 16px; }
 }
 
